@@ -47,7 +47,8 @@ C <- read.csv("X.stn_detrended.csv")
   dim(C)
 
 
-C.id <- read.csv("A.stn_detrended.csv")[,1] # the id number for each ICV proxy. 
+C.id <- read.csv("A.stn_detrended.csv")[,1] 
+  # the id number for each ICV proxy. 
   length(C.id) # same rows as C
   nlevels(as.factor(C.id))
 
