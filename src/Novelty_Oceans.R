@@ -25,13 +25,23 @@ setwd("/Users/katie/Desktop/OceanClimateNovelty/data/")
 dat <- fread("large_files/Data_OceNov.txt", sep = ",")
 head(dat)
 unique(dat$Year)
+cond <- dat$Lat > 40 & dat$Lat < 50
+d2 <- dat[cond,]
+ggplot(d2, aes( Month, SST))+
+  geom_hex(binwidth = c(0.5, 0.5))
 
 ggplot(dat, aes( Lon, Lat))+
   geom_hex(binwidth = c(5, 5))
 
 dat_depth <- fread("Data_subsurface.txt", sep=",")
-head(dat_depth)
+head(dat_depth,100)
 sort(unique(dat_depth$Year))
+dat_depth$MonthDay <- dat_depth$Month + dat_depth$Day/30.5
+
+sort(unique(dat_depth$Depth))
+
+#cond <- dat_depth$No==5000 & dat_depth$Depth < 30
+#plot(dat_depth$MonthDay[cond], dat_depth$Temp[cond])
 
 ggplot(dat_depth, aes( Lon, Lat))+
   geom_hex(binwidth = c(5, 5))
@@ -50,7 +60,9 @@ dim(dat_2000)
 dat_2100 <-   dat %>% filter(Year>2050)
 dim(dat_2100) 
 
-# 40-year climate normals
+#--------------------------------
+#### 40-year climate normals ####
+#--------------------------------
   # summer  
     # (if Lat > 0, months 6,7,8)
     # (if Lat < 0, months 12,1,2)
@@ -59,10 +71,15 @@ dim(dat_2100)
     # (if Lat > 0, months 12,1,2)
   # means: SST_summer, SST_winter, Arag_summer, Arag_winter, 
           # Calc_summer, Calc_winter
+
+calculate_normals <- function(dat1){
+  # input the data frame for the span of years you want the normals for
+  month1 <- c(1,2,3, 4)
+  month2 <- c(7, 8,9,10)
   
   ## Summer calculations
-  x_sum <- dat %>% filter((Lat <0 & Month %in% c(12,1,2))|
-                        (Lat >0 & Month %in% c(6,7,8)))
+  x_sum <- dat1 %>% filter((Lat <0 & Month %in% month1)|
+                        (Lat >0 & Month %in% month2))
   SST_sum <- tapply(x_sum$SST,INDEX = x_sum$No,mean, rm.na=TRUE)
     length(SST_sum)
   Arag_sum <- tapply(x_sum$Arag,INDEX = x_sum$No,mean, rm.na=TRUE)
@@ -71,59 +88,83 @@ dim(dat_2100)
     length(Calc_sum)
   identical(names(SST_sum), names(Arag_sum))
   identical(names(Arag_sum), names(Calc_sum))
-  smr <- data.frame(No=names(SST_sum), SST_sum,Arag_sum,Calc_sum  )
+  smr <- data.frame(No=as.integer(names(SST_sum)), SST_sum,Arag_sum,Calc_sum  )
   head(smr)
   
   ## Winter calculations    
-  x_win <- dat %>% filter((Lat >0 & Month %in% c(12,1,2))|
-                            (Lat <0 & Month %in% c(6,7,8)))
+  x_win <- dat1 %>% filter((Lat >0 & Month %in% month1)|
+                            (Lat <0 & Month %in% month2))
   SST_win <- tapply(x_win$SST,INDEX = x_win$No,mean, rm.na=TRUE)
   Arag_win <- tapply(x_win$Arag,INDEX = x_win$No,mean, rm.na=TRUE)
   Calc_win <- tapply(x_win$Calc,INDEX = x_win$No,mean, rm.na=TRUE)
   identical(names(SST_win), names(Arag_win))
   identical(names(Arag_win), names(Calc_win))
-  wnt <- data.frame(No=names(SST_win), SST_win,Arag_win,Calc_win  )
+  wnt <- data.frame(No=as.integer(names(SST_win)), SST_win,Arag_win,Calc_win  )
   head(wnt)
   
-## Climate data. note that all precipitation variables have been log-transformed
-A <- read.csv("X.NAnaec8.ref.csv") 
-  # 1971-2000 climate normals for all land cells of the DEM 
+  # merge summer and winter data frames
+  identical(names(SST_win), names(SST_sum))
+  normals <- full_join(smr, wnt, by="No")
+  head(normals)
+  nrow(normals) == nrow(wnt)
+  nrow(normals) == nrow(smr)
+  return(normals)
+}
+
+norm_1800 <- calculate_normals(dat_1800)
+norm_2000 <- calculate_normals(dat_2000)
+norm_2100 <- calculate_normals(dat_2100)
+head(norm_1800)
+head(norm_2000)
+
+#--------------------------------  
+### Detrend for ICV and get sd ####
+#--------------------------------
+
+get_detrend <- function(dat1){
+  
+  dat1$Month2 <- dat1$Month^2
+  dat1$Month3 <- dat1$Month^3
+  
+  get_sd_resids <- function(i){
+    # dat1 <- dat_2000
+    # plot(dat1$SST[dat1$No==i]~dat1$Month[dat1$No==i])
+    SST_sd <- sd(residuals(lm(SST~Month + Month2 + Month3,
+              data=dat1[dat1$No==i,])))
+    Arag_sd <- sd(residuals(lm(Arag~Month + Month2 + Month3,
+                            data=dat1[dat1$No==i,])))
+    Calc_sd <- sd(residuals(lm(Calc~Month + Month2 + Month3,
+                            data=dat1[dat1$No==i,])))
+    #points(dat1$Month[dat1$No==i],predict(mod), pch=19)
+    return(c(SST_sd, Arag_sd, Calc_sd))
+  }
+  
+  stations <- sort(unique(dat1$No))
+    sds<- sapply(stations, get_sd_resids)
+      # this takes ~10 minutes to run
+  out <- data.frame(stations, t(sds), t(sds))
+  colnames(out) <- c("No", "SST_sum", "Arag_sum", "Calc_sum",
+                     "SST_win", "Arag_win", "Calc_win")
+}
+
+sd_stations <- get_detrend(dat_2000)
+  # this takes about 10 min to run
+ 
+#--------------------------------  
+### 1800 analog to today ####
+#--------------------------------
+A <- norm_1800
+  # 1800-1830 climate normals
   head(A)
   dim(A)
-  # max and min temperatures for each season; precip for each season
-
-B <- read.csv("X.NAnaec8.proj_GlobalMean_RCP45_2085.csv") 
-  # 2071-2100 climate normals (RCP4.5 ensemble mean projection) for all land cells of the DEM. 
+  
+B <- norm_2000
+  # 1970-2000 climate normals 
   head(B)
   dim(B)
   # same columns as A
   
-C <- read.csv("X.stn_detrended.csv") 
-  # ICV proxy data. Linearly detrended 1951-1990 annual time series at selected 
-  # CRU TS3.23 climate stations. these time series are used as proxies for 
-  # local interannual climate variability ("ICV proxies")
-  # same columns as A and B
-  head(C, 50)
-  dim(C)
-
-
-C.id <- read.csv("A.stn_detrended.csv")[,1] 
-  # the id number for each ICV proxy. 
-  length(C.id) # same rows as C
-  nlevels(as.factor(C.id))
-
-proxy <- read.csv("grid4nn_NAnaec8.csv")[,1]  
-  # the ICV proxy used for each grid cell. 
-  # need to read paper again for this one too - 
-  head(proxy)
-  length(proxy) # same rows as A and B
-  nlevels(as.factor(proxy)) # it appears some C.id's not used?
-
-## subsample the analog pool to reduce processing time
-subsample <- read.csv("subsample.NAnaec8.csv")[,1]  
-  # need to read paper again for this one, assume kept one of multiple sites with same analog
-A <- A[subsample,] 
-dim(A)
+C <- sd_stations
 
 ########################
 ### Calculation of sigma dissimilarity
