@@ -196,14 +196,41 @@ head(stationInfo)
 which(!complete.cases(stationInfo))
 
 ### 
-image.plot(x=stationInfo$lat, y=stationInfo$long, z=stationInfo$SST_sum)
 
-ggplot(stationInfo) + geom_hex(aes(x = long, 
-                                   y = lat,
-                                   fill = SST_sum),
-                               binwidth = c(5, 5))+
-  scale_fill_gradientn(colours = rainbow(7))
+#--------------------------------  
+### function for plotting ####
+#--------------------------------
+Plot_nonInt<-function(lat, long, var, refMap, legend_name){
+  sampData <- data.frame(lat, long, var)
+  if("ggplot2"%in%installed.packages()){
+    require(ggplot2)
+    ggplot()+
+      geom_polygon(data = refMap, aes(x=long, y = lat, group=group))+
+      stat_summary_2d(data=sampData, aes(x=long, y = lat, z= var), bins=80, alpha = 0.8)+
+      #theme(legend.position=c(50,100))+
+      #scale_fill_brewer(palette="Dark2") +
+      scale_fill_gradientn(name=legend_name, 
+                           colours=two.colors(40,start = "blue", end="red", middle="orange")) +
+      coord_fixed() 
+      
+  }else{
+    print("Must install package 'ggplot2' to run this function")
+  }
+}
 
+#--------------------------------  
+### plot sd ####
+#--------------------------------
+world <- map_data("world2") #Read in reference map from ggplot2
+Plot_nonInt(stationInfo$lat, stationInfo$long, 
+            stationInfo$SST_sum, world, "sd SST")
+
+Plot_nonInt(stationInfo$lat, stationInfo$long, 
+            stationInfo$Arag_sum, world, "sd Arag")
+
+
+Plot_nonInt(stationInfo$lat, stationInfo$long, 
+            stationInfo$Calc_sum, world, "sd Calc")
 
 #--------------------------------  
 ### 1800 analog to today ####
