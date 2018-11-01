@@ -23,7 +23,7 @@ library(adehabitatLT)   #provides the chi distribution
 ##################
 ##these files were created in a separate script "Novelty_NA_LocalStPCA_InputData_Feb2016.R", except for the cru surrogates, which were created in the Oct2015 version. 
 
-setwd("/Users/katie/Desktop/OceanClimateNovelty/data/large_files/S15_SampleCode") ## specify location of data
+setwd("/Users/katie/Desktop/OceanClimateNovelty/data/S15_SampleCode") ## specify location of data
 
 ## Climate data. note that all precipitation variables have been log-transformed
 A <- read.csv("X.NAnaec8.ref.csv") 
@@ -54,7 +54,6 @@ C.id <- read.csv("A.stn_detrended.csv")[,1]
 
 proxy <- read.csv("grid4nn_NAnaec8.csv")[,1]  
   # the ICV proxy used for each grid cell. 
-  # need to read paper again for this one too - 
   head(proxy)
   length(proxy) # same rows as A and B
   nlevels(as.factor(proxy)) # it appears some C.id's not used?
