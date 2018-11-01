@@ -121,64 +121,6 @@ norm_2100 <- calculate_normals(dat_2100)
 head(norm_1800)
 head(norm_2000)
 
-#--------------------------------  
-### Detrend for ICV and get sd ####
-### Note I don't think this is a conservative way to do this
-#--------------------------------
-
-get_detrend <- function(dat1){
-  
-  dat1$Month2 <- dat1$Month^2
-  dat1$Month3 <- dat1$Month^3
-  
-  get_sd_resids <- function(i){
-    # dat1 <- dat_2000
-    # plot(dat1$SST[dat1$No==i]~dat1$Month[dat1$No==i])
-    SST_sd <- sd(residuals(lm(SST~Month + Month2 + Month3,
-              data=dat1[dat1$No==i,])))
-    Arag_sd <- sd(residuals(lm(Arag~Month + Month2 + Month3,
-                            data=dat1[dat1$No==i,])))
-    Calc_sd <- sd(residuals(lm(Calc~Month + Month2 + Month3,
-                            data=dat1[dat1$No==i,])))
-    #points(dat1$Month[dat1$No==i],predict(mod), pch=19)
-    return(c(SST_sd, Arag_sd, Calc_sd))
-  }
-  
-  stations <- sort(unique(dat1$No))
-    sds<- sapply(stations, get_sd_resids)
-      # this takes ~10 minutes to run
-  out <- data.frame(stations, t(sds), t(sds))
-  colnames(out) <- c("No", "SST_sum", "Arag_sum", "Calc_sum",
-                     "SST_win", "Arag_win", "Calc_win")
-}
-
-
-#--------------------------------  
-### Get annual ICV
-#--------------------------------
-
-get_ICV <- function(dat1){
-  get_sd_resids <- function(i){
-    # dat1 <- dat_2000
-    # plot(dat1$SST[dat1$No==i]~dat1$Month[dat1$No==i])
-    SST_sd <- sd(dat1$SST[dat1$No==i])
-    Arag_sd <- sd(dat1$Arag[dat1$No==i])
-    Calc_sd <- sd(dat1$Calc[dat1$No==i])
-    #points(dat1$Month[dat1$No==i],predict(mod), pch=19)
-    return(c(SST_sd, Arag_sd, Calc_sd))
-  }
-  stations <- sort(unique(dat1$No))
-  sds<- sapply(stations, get_sd_resids)
-  # this takes ~10 minutes to run
-  out <- data.frame(stations, t(sds), t(sds))
-  colnames(out) <- c("No", "SST_sum", "Arag_sum", "Calc_sum",
-                     "SST_win", "Arag_win", "Calc_win")
-  return(out)
-}
-
-sd_stations <- get_ICV(dat_2000)
-  # this takes about 10 min to run
-head(sd_stations) 
 
 #--------------------------------  
 ### data frame to link station number to Lat Long ####
