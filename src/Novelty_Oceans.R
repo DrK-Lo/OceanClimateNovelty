@@ -363,10 +363,11 @@ for(j in sort(unique(proxy))){
 dim(A)
 dim(B)
 head(NN.sigma)
-
+which(is.infinite(NN.sigma))
 NN.sigma[which(is.infinite(NN.sigma))] <- NA
 which(is.na(NN.sigma))
 tail(sort(NN.sigma))
+hist(NN.sigma)
 length(NN.sigma)
 world <- map_data("world2")
 dim(stationInfo)
