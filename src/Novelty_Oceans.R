@@ -1,6 +1,7 @@
 ### KE Lotterhos
 ### Oct 2018
 ### Northeastern University
+### Mod. Áki - Nov. 2018
 
 ## Based on basic code for calculating and mapping climatic novelty using the sigma dissimilarity metric. 
 ## written by Colin Mahony
@@ -21,7 +22,8 @@ source("src/Novelty_Oceans_Functions.R")
 # -----------------------------
 ##these files were created in a separate script "Novelty_NA_LocalStPCA_InputData_Feb2016.R", except for the cru surrogates, which were created in the Oct2015 version. 
 
-dat <- fread("data/large_files/Data_OceNov.txt", sep = ",")
+#dat <- fread("data/large_files/Data_OceNov.txt", sep = ",")
+dat <- fread("data/large_files/ESM2M_2000_RCP8.5.txt", sep = ",")
 head(dat)
 unique(dat$Year)
 cond <- dat$Lat > 40 & dat$Lat < 50
@@ -43,8 +45,8 @@ sort(unique(dat_depth$Depth))
 #cond <- dat_depth$No==5000 & dat_depth$Depth < 30
 #plot(dat_depth$MonthDay[cond], dat_depth$Temp[cond])
 
-ggplot(dat_depth, aes( Lon, Lat))+
-  geom_hex(binwidth = c(5, 5))
+#ggplot(dat_depth, aes( Lon, Lat))+
+#  geom_hex(binwidth = c(5, 5))
 
 
 dat_1800 <- dat %>% filter(Year<1850)
@@ -72,7 +74,7 @@ norm_2000 <- calculate_normals(dat_2000)
 norm_2100 <- calculate_normals(dat_2100)
 head(norm_1800)
 head(norm_2000)
-
+head(norm_2100)
 
 #--------------------------------  
 ### data frame to link station number to Lat Long ####

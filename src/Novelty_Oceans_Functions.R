@@ -2,6 +2,7 @@
 ### KE Lotterhos
 ### Oct 2018
 ### Northeastern University
+### Mod. Áki Nov. 2018
 
 library(raster)
 library(FNN)
@@ -12,9 +13,13 @@ library(data.table)
 library(tidyverse)
 library(ggplot2)
 library(fields)
-if("ggplot2"%in%installed.packages()){
-  require(ggplot2)}
-
+#if("ggplot2"%in%installed.packages()){
+#  require(ggplot2)}
+library(hexbin)
+library(rgdal)
+library(tmap)
+library(gstat) 
+library(sp)
 
 #--------------------------------
 #### 40-year climate normals ####
@@ -30,8 +35,13 @@ if("ggplot2"%in%installed.packages()){
 
 calculate_normals <- function(dat1){
   # input the data frame for the span of years you want the normals for
-  month1 <- c(1,2,3, 4)
-  month2 <- c(7, 8,9,10)
+  # AJL - Changed summer months to June, July, & August
+  # AJL - Changed winter months to December, January, & February
+  
+  #month1 <- c(1,2,3, 4)
+  #month2 <- c(7, 8,9,10)
+  month1 <- c(6,7,8)
+  month2 <- c(12,1,2)
   
   ## Summer calculations
   x_sum <- dat1 %>% filter((Lat <0 & Month %in% month1)|
@@ -42,9 +52,13 @@ calculate_normals <- function(dat1){
   length(Arag_sum)
   Calc_sum <- tapply(x_sum$Calc,INDEX = x_sum$No,mean, rm.na=TRUE)
   length(Calc_sum)
+  Long <- aggregate(Lon~No, x_sum, paste, simplify = F) #Get Long
+  Lon <- as.numeric(lapply(Long$Lon, `[[`, 1))
+  Lati <- aggregate(Lat~No, x_sum, paste, simplify = F) #Get Lat
+  Lat <- as.numeric(lapply(Lati$Lat, `[[`, 1))
   identical(names(SST_sum), names(Arag_sum))
   identical(names(Arag_sum), names(Calc_sum))
-  smr <- data.frame(No=as.integer(names(SST_sum)), SST_sum,Arag_sum,Calc_sum  )
+  smr <- data.frame(No=as.integer(names(SST_sum)), Lon, Lat, SST_sum,Arag_sum,Calc_sum  )
   head(smr)
   
   ## Winter calculations    
@@ -53,10 +67,21 @@ calculate_normals <- function(dat1){
   SST_win <- tapply(x_win$SST,INDEX = x_win$No,mean, rm.na=TRUE)
   Arag_win <- tapply(x_win$Arag,INDEX = x_win$No,mean, rm.na=TRUE)
   Calc_win <- tapply(x_win$Calc,INDEX = x_win$No,mean, rm.na=TRUE)
+  Long <- aggregate(Lon~No, x_win, paste, simplify=F) # Get Lon
+  Lon <- as.numeric(lapply(Long$Lon, `[[`, 1))
+  Lati <- aggregate(Lat~No, x_win, paste, simplify=F) # Get Lat
+  Lat <- as.numeric(lapply(Lati$Lat, `[[`, 1))
   identical(names(SST_win), names(Arag_win))
   identical(names(Arag_win), names(Calc_win))
-  wnt <- data.frame(No=as.integer(names(SST_win)), SST_win,Arag_win,Calc_win  )
+  wnt <- data.frame(No=as.integer(names(SST_win)), Lon, Lat, SST_win,Arag_win,Calc_win  )
   head(wnt)
+  
+  #Drop the Long/Lat info for the smaller dataset, they're the same and will just be doubled in the merge
+  if(nrow(wnt)>=nrow(smr)){
+    smr<-smr[,-c(2,3)]
+  } else {
+    wnt<-wnt[,-c(2,3)]
+  }
   
   # merge summer and winter data frames
   identical(names(SST_win), names(SST_sum))
