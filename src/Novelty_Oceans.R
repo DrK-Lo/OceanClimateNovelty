@@ -11,9 +11,9 @@
 # Compare today surface analog (A) to 2100 (B), with today's surface variability (C)
 # Compare today all depths analog (A) to 2100 (B), with today's surface variability (C)
 
-
-setwd("/Users/katie/Desktop/OceanClimateNovelty/") 
-## specify location of data
+## Specify location of data
+#setwd("/Users/katie/Desktop/OceanClimateNovelty/") 
+setwd("~/Desktop/PostDoc/NovelOceanClim/OceanClimateNovelty/")
 
 source("src/Novelty_Oceans_Functions.R")
 ##-----------------------------
