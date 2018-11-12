@@ -20,6 +20,11 @@ library(rgdal)
 library(tmap)
 library(gstat) 
 library(sp)
+library(maptools)
+library(sf)
+library(fasterize)
+library(fansi)
+
 
 #--------------------------------
 #### 40-year climate normals ####
@@ -52,13 +57,14 @@ calculate_normals <- function(dat1){
   length(Arag_sum)
   Calc_sum <- tapply(x_sum$Calc,INDEX = x_sum$No,mean, rm.na=TRUE)
   length(Calc_sum)
-  Long <- aggregate(Lon~No, x_sum, paste, simplify = F) #Get Long
-  Lon <- as.numeric(lapply(Long$Lon, `[[`, 1))
-  Lati <- aggregate(Lat~No, x_sum, paste, simplify = F) #Get Lat
-  Lat <- as.numeric(lapply(Lati$Lat, `[[`, 1))
+  #Long <- aggregate(Lon~No, x_sum, paste, simplify = F) #Get Long
+  #Lon <- as.numeric(lapply(Long$Lon, `[[`, 1))
+  #Lati <- aggregate(Lat~No, x_sum, paste, simplify = F) #Get Lat
+  #Lat <- as.numeric(lapply(Lati$Lat, `[[`, 1))
   identical(names(SST_sum), names(Arag_sum))
   identical(names(Arag_sum), names(Calc_sum))
-  smr <- data.frame(No=as.integer(names(SST_sum)), Lon, Lat, SST_sum,Arag_sum,Calc_sum  )
+  smr <- data.frame(No=as.integer(names(SST_sum)), #Lon, Lat, 
+                    SST_sum,Arag_sum,Calc_sum  )
   head(smr)
   
   ## Winter calculations    
@@ -67,21 +73,22 @@ calculate_normals <- function(dat1){
   SST_win <- tapply(x_win$SST,INDEX = x_win$No,mean, rm.na=TRUE)
   Arag_win <- tapply(x_win$Arag,INDEX = x_win$No,mean, rm.na=TRUE)
   Calc_win <- tapply(x_win$Calc,INDEX = x_win$No,mean, rm.na=TRUE)
-  Long <- aggregate(Lon~No, x_win, paste, simplify=F) # Get Lon
-  Lon <- as.numeric(lapply(Long$Lon, `[[`, 1))
-  Lati <- aggregate(Lat~No, x_win, paste, simplify=F) # Get Lat
-  Lat <- as.numeric(lapply(Lati$Lat, `[[`, 1))
+  #Long <- aggregate(Lon~No, x_win, paste, simplify=F) # Get Lon
+  #Lon <- as.numeric(lapply(Long$Lon, `[[`, 1))
+  #Lati <- aggregate(Lat~No, x_win, paste, simplify=F) # Get Lat
+  #Lat <- as.numeric(lapply(Lati$Lat, `[[`, 1))
   identical(names(SST_win), names(Arag_win))
   identical(names(Arag_win), names(Calc_win))
-  wnt <- data.frame(No=as.integer(names(SST_win)), Lon, Lat, SST_win,Arag_win,Calc_win  )
+  wnt <- data.frame(No=as.integer(names(SST_win)), #Lon, Lat, 
+                    SST_win,Arag_win,Calc_win  )
   head(wnt)
   
   #Drop the Long/Lat info for the smaller dataset, they're the same and will just be doubled in the merge
-  if(nrow(wnt)>=nrow(smr)){
-    smr<-smr[,-c(2,3)]
-  } else {
-    wnt<-wnt[,-c(2,3)]
-  }
+  #if(nrow(wnt)>=nrow(smr)){
+  #  smr<-smr[,-c(2,3)]
+  #} else {
+  #  wnt<-wnt[,-c(2,3)]
+  #}
   
   # merge summer and winter data frames
   identical(names(SST_win), names(SST_sum))
@@ -108,4 +115,21 @@ Plot_nonInt<-function(lat, long, var, refMap, legend_name){
                          colours=two.colors(40,start = "blue", 
                                             end="red", middle="orange")) +
     coord_fixed() 
+}
+
+#Function to convert raster objects as tibbles, written by Sébastien Rochette
+gplot_data <- function(x, maxpixels = 100000)  {
+  x <- raster::sampleRegular(x, maxpixels, asRaster = TRUE)
+  coords <- raster::xyFromCell(x, seq_len(raster::ncell(x)))
+  ## Extract values
+  dat <- utils::stack(as.data.frame(raster::getValues(x))) 
+  names(dat) <- c('value', 'variable')
+  
+  dat <- dplyr::as.tbl(data.frame(coords, dat))
+  
+  if (!is.null(levels(x))) {
+    dat <- dplyr::left_join(dat, levels(x)[[1]], 
+                            by = c("value" = "ID"))
+  }
+  dat
 }

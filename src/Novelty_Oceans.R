@@ -53,7 +53,6 @@ dat_1800 <- dat %>% filter(Year<1850)
 dim(dat_1800)
 dat_2000 <-   dat %>% filter(Year>1960 & Year<2010)
 dim(dat_2000)  
-
 dat_2100 <-   dat %>% filter(Year>2050)
 dim(dat_2100) 
 
@@ -224,13 +223,17 @@ dim(B)
 head(NN.sigma)
 
 NN.sigma[which(is.infinite(NN.sigma))] <- NA
-which(is.na(NN.sigma))
+#which(is.na(NN.sigma))
 tail(sort(NN.sigma))
 length(NN.sigma)
-world <- map_data("world2")
-dim(stationInfo)
+
+## Adding interpolation visualization
 B2 <- data.frame(No=B$No, NN.sigma)
 B2 <- merge(B2, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
+
+world <- map_data("world2")
+dim(stationInfo)
+
 Plot_nonInt(B2$lat, B2$long, 
             B2$NN.sigma, world, "sigma dis.")
 #write.csv(NN.sigma,"NN.sigma.RCP45.GlobalMean.2085.csv", row.names=FALSE)
@@ -371,6 +374,9 @@ which(is.na(NN.sigma))
 tail(sort(NN.sigma))
 hist(NN.sigma)
 length(NN.sigma)
+
+#Visualize
+
 world <- map_data("world2")
 dim(stationInfo)
 B2 <- data.frame(No=B$No, NN.sigma)
@@ -378,3 +384,62 @@ B2 <- merge(B2, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
 Plot_nonInt(B2$lat, B2$long, 
             B2$NN.sigma, world, "sigma dis.")
 #write.csv(NN.sigma,"NN.sigma.RCP45.GlobalMean.2085.csv", row.names=FALSE)
+
+#Visualize with interpolation
+B2a<-B2[!is.na(B2$NN.sigma),]
+
+B2a<-B2a[,c(4,3,2)]
+
+for(i in 1:nrow(B2a)){
+  if(B2a$long[i]>360){
+    B2a$long[i]<-B2a$long[i]-360
+  }
+}
+
+EB2 <- SpatialPoints(B2a) # this is your spatial points df
+
+# Project sp object to WGS 84
+proj4string(EB2) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84")
+
+# Create an empty grid; n = number of cells
+# Increase n to increase resolution
+gr <- as.data.frame(spsample(EB2, 'regular', n  = 50000))
+names(gr) <- c('X', 'Y')
+coordinates(gr) <- c('X', 'Y')
+gridded(gr) <- TRUE  
+fullgrid(gr) <- TRUE  # Create SpatialGrid object
+proj4string(gr) <- proj4string(EB2) 
+#If this line throws an error, run this
+# chunk again. It is a random grid.
+
+# Interpolate the grid cells using power value = 2
+# NN.sigma ~ 1 = simple kriging
+EB2.idw <- idw(NN.sigma ~ 1, EB2, newdata = gr, idp = 8)
+
+# Convert to raster
+r <- raster(EB2.idw)
+
+world<-map("world2", fill=T,plot=F)
+y<-map2SpatialPolygons(world, IDs = sapply(strsplit(world$names, ":"), function(x) x[1]), proj4string=CRS("+proj=longlat +datum=WGS84"))
+z<-st_as_sf(y)
+wr <- raster(z, res = 0.01)
+wrld_r <- fasterize(z, wr)
+gplot_wrld_r <- gplot_data(wrld_r)
+
+gplot_r <- gplot_data(r)
+
+#Change scale_fill_gradient value to name of variable
+ggplot() +
+  geom_tile(data = gplot_r, 
+            aes(x = x, y = y, fill = value)) +
+  geom_tile(data = dplyr::filter(gplot_wrld_r, !is.na(value)), 
+            aes(x = x, y = y), fill = "grey20") +
+  ylim(-78,90) + 
+  xlab("Long") +
+  ylab("Lat") +
+  scale_fill_gradient2("Sigma dis.",
+                      low = 'blue', mid = "yellow", high = 'red',
+                      midpoint = 4,
+                      na.value = NA) +
+  coord_quickmap()
+
