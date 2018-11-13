@@ -237,7 +237,7 @@ dim(stationInfo)
 Plot_nonInt(B2$lat, B2$long, 
             B2$NN.sigma, world, "sigma dis.")
 #write.csv(NN.sigma,"NN.sigma.RCP45.GlobalMean.2085.csv", row.names=FALSE)
-#write.csv(NN.sigma,"NN.sigma.RCP85.today_1800.csv", row.names=FALSE)
+#write.csv(B2,"Sigma.RCP85.today_1800.csv", row.names=FALSE)
 
 ##Interpolation for visualization
 B2a<-B2[!is.na(B2$NN.sigma),]
@@ -266,7 +266,7 @@ proj4string(gr) <- proj4string(EB2)
 #If this line throws an error, run this
 # chunk again. It is a random grid.
 
-# Interpolate the grid cells using power value = 2
+# Interpolate the grid cells using inverse distance weighing power = 8
 # NN.sigma ~ 1 = simple kriging
 EB2.idw <- idw(NN.sigma ~ 1, EB2, newdata = gr, idp = 8)
 
@@ -447,7 +447,7 @@ B2 <- merge(B2, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
 Plot_nonInt(B2$lat, B2$long, 
             B2$NN.sigma, world, "sigma dis.")
 #write.csv(NN.sigma,"NN.sigma.RCP45.GlobalMean.2085.csv", row.names=FALSE)
-#write.csv(NN.sigma,"NN.sigma.RCP85.today_2100.csv", row.names=FALSE)
+#write.csv(B2,"Sigma.RCP85.today_2100.csv", row.names=FALSE)
 
 #Visualize with interpolation
 B2a<-B2[!is.na(B2$NN.sigma),]
@@ -478,6 +478,7 @@ proj4string(gr) <- proj4string(EB2)
 
 # Interpolate the grid cells using power value = 2
 # NN.sigma ~ 1 = simple kriging
+
 EB2.idw <- idw(NN.sigma ~ 1, EB2, newdata = gr, idp = 8)
 
 # Convert to raster
@@ -498,7 +499,8 @@ ggplot() +
             aes(x = x, y = y, fill = value)) +
   geom_tile(data = dplyr::filter(gplot_wrld_r, !is.na(value)), 
             aes(x = x, y = y), fill = "grey20") +
-  ylim(-78,90) + 
+  xlim(1,358) +
+  ylim(-77,90) + 
   xlab("Long") +
   ylab("Lat") +
   ggtitle("Sigma dissimilarity: Today from 2100") +
