@@ -25,6 +25,10 @@ library(sf)
 library(fasterize)
 library(fansi)
 
+#Create function that removes previous user installed packages to avoid masking
+clean_pkgs<-function(){
+  lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE)
+}
 
 #--------------------------------
 #### 40-year climate normals ####
@@ -115,6 +119,21 @@ Plot_nonInt<-function(lat, long, var, refMap, legend_name){
                          colours=two.colors(40,start = "blue", 
                                             end="red", middle="orange")) +
     coord_fixed() 
+}
+
+
+## Function to create a random grid empty grid 
+# n = number of cells, increase n to increase resolution
+makeGrid<-function(EB2){
+  repeat{
+    gr <- as.data.frame(spsample(EB2, 'regular', n  = 50000))
+    names(gr) <- c('X', 'Y')
+    coordinates(gr) <- c('X', 'Y')
+    gridded(gr) <- TRUE  
+    fullgrid(gr) <- TRUE  # Create SpatialGrid object
+    try(proj4string(gr) <- proj4string(EB2))
+    if(is.na(proj4string(gr))==FALSE) return(gr)
+  }
 }
 
 #Function to convert raster objects as tibbles, written by Sébastien Rochette

@@ -16,7 +16,14 @@
 #setwd("/Users/katie/Desktop/OceanClimateNovelty/") 
 setwd("~/Desktop/PostDoc/NovelOceanClim/OceanClimateNovelty/")
 
+#Create function that removes previous user installed packages to avoid masking
+clean_pkgs<-function(){
+  lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE)
+}
+#clean_pkgs() #Remove all non-essential previously called packages
+
 source("src/Novelty_Oceans_Functions.R")
+
 ##-----------------------------
 #### Read in the input data ####
 # -----------------------------
@@ -238,6 +245,7 @@ Plot_nonInt(B2$lat, B2$long,
             B2$NN.sigma, world, "sigma dis.")
 #write.csv(NN.sigma,"NN.sigma.RCP45.GlobalMean.2085.csv", row.names=FALSE)
 #write.csv(B2,"Sigma.RCP85.today_1800.csv", row.names=FALSE)
+B2<-fread("./data/Sigma.RCP85.today_1800.csv")
 
 ##Interpolation for visualization
 B2a<-B2[!is.na(B2$NN.sigma),]
@@ -288,7 +296,8 @@ ggplot() +
             aes(x = x, y = y, fill = value)) +
   geom_tile(data = dplyr::filter(gplot_wrld_r, !is.na(value)), 
             aes(x = x, y = y), fill = "grey20") +
-  ylim(-78,90) + 
+  xlim(0,360) +
+  ylim(-77,90) + 
   xlab("Long") +
   ylab("Lat") +
   ggtitle("Sigma dissimilarity: Today from 1800") +
@@ -296,11 +305,9 @@ ggplot() +
   scale_fill_gradient2(expression(paste(sigma," dis.")),
                        low = 'blue', mid = "yellow", high = 'red',
                        midpoint = 4,
+                       limits=c(0,8.1),
                        na.value = NA) +
   coord_quickmap()
-
-
-
 
 #--------------------------------  
 ### Today analog to 2100 ####
@@ -448,6 +455,7 @@ Plot_nonInt(B2$lat, B2$long,
             B2$NN.sigma, world, "sigma dis.")
 #write.csv(NN.sigma,"NN.sigma.RCP45.GlobalMean.2085.csv", row.names=FALSE)
 #write.csv(B2,"Sigma.RCP85.today_2100.csv", row.names=FALSE)
+B2<-fread("./data/Sigma.RCP85.today_2100.csv")
 
 #Visualize with interpolation
 B2a<-B2[!is.na(B2$NN.sigma),]
@@ -465,16 +473,8 @@ EB2 <- SpatialPoints(B2a) # this is your spatial points df
 # Project sp object to WGS 84
 proj4string(EB2) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84")
 
-# Create an empty grid; n = number of cells
-# Increase n to increase resolution
-gr <- as.data.frame(spsample(EB2, 'regular', n  = 50000))
-names(gr) <- c('X', 'Y')
-coordinates(gr) <- c('X', 'Y')
-gridded(gr) <- TRUE  
-fullgrid(gr) <- TRUE  # Create SpatialGrid object
-proj4string(gr) <- proj4string(EB2) 
-#If this line throws an error, run this
-# chunk again. It is a random grid.
+# Function to create a random grid empty grid
+gr<-makeGrid(EB2)
 
 # Interpolate the grid cells using power value = 2
 # NN.sigma ~ 1 = simple kriging
@@ -499,8 +499,8 @@ ggplot() +
             aes(x = x, y = y, fill = value)) +
   geom_tile(data = dplyr::filter(gplot_wrld_r, !is.na(value)), 
             aes(x = x, y = y), fill = "grey20") +
-  xlim(1,358) +
-  ylim(-77,90) + 
+  #xlim(2,358) +
+  ylim(-78,90) + 
   xlab("Long") +
   ylab("Lat") +
   ggtitle("Sigma dissimilarity: Today from 2100") +
@@ -508,6 +508,7 @@ ggplot() +
   scale_fill_gradient2(expression(paste(sigma," dis.")),
                       low = 'blue', mid = "yellow", high = 'red',
                       midpoint = 4,
+                      limits=c(0,8.1),
                       na.value = NA) +
   coord_quickmap()
 
