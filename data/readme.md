@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 20181102 Me with Liqing:
 
 Info about the data:
@@ -36,4 +37,13 @@ Depth data:
 
 3) For poles and other areas with low novelty, where do the existing climates come from?
 -> new angle would be to include depth in novelty calculation
+=======
+## Folder
+>>>>>>> 2f7bb9b4ddcbe7004e37d5725fc5a7a2fb58dc1b
 
+* large_files - surface data from Liqing, values for 1800-1830, 1970-2000, 2070-2100, generated from ESM2M model, adjusted to year 2000, under RCP8.5 conditions
+* real_data - Contains data from HOT and BATS
+
+## Files
+
+* Data_subsurface - subsurface data from Liqing, need to clarify source

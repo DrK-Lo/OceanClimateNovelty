@@ -1,6 +1,7 @@
 ### KE Lotterhos
 ### Oct 2018
 ### Northeastern University
+### Mod. Áki - Nov. 2018
 
 ## Based on basic code for calculating and mapping climatic novelty using the sigma dissimilarity metric. 
 ## written by Colin Mahony
@@ -11,17 +12,29 @@
 # Compare today surface analog (A) to 2100 (B), with today's surface variability (C)
 # Compare today all depths analog (A) to 2100 (B), with today's surface variability (C)
 
+## Specify location of data
+#setwd("/Users/katie/Desktop/OceanClimateNovelty/") 
+setwd("~/Desktop/PostDoc/NovelOceanClim/OceanClimateNovelty/")
 
-setwd("/Users/katie/Desktop/OceanClimateNovelty/") 
-## specify location of data
+#Create function that removes previous user installed packages to avoid masking
+clean_pkgs<-function(){
+  lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE)
+}
+#clean_pkgs() #Remove all non-essential previously called packages
 
 source("src/Novelty_Oceans_Functions.R")
+
 ##-----------------------------
 #### Read in the input data ####
 # -----------------------------
 ##these files were created in a separate script "Novelty_NA_LocalStPCA_InputData_Feb2016.R", except for the cru surrogates, which were created in the Oct2015 version. 
 
+<<<<<<< HEAD
 dat <- fread("data/large_files/Katie_T_Ar_Ca_pH_RCP85.txt", sep = ",")
+=======
+#dat <- fread("data/large_files/Data_OceNov.txt", sep = ",")
+dat <- fread("data/large_files/ESM2M_2000_RCP8.5.txt", sep = ",")
+>>>>>>> 2f7bb9b4ddcbe7004e37d5725fc5a7a2fb58dc1b
 head(dat)
 unique(dat$Year)
 cond <- dat$Lat > 40 & dat$Lat < 50
@@ -44,15 +57,14 @@ d2 <- dat[cond,]
 #cond <- dat_depth$No==5000 & dat_depth$Depth < 30
 #plot(dat_depth$MonthDay[cond], dat_depth$Temp[cond])
 
-ggplot(dat_depth, aes( Lon, Lat))+
-  geom_hex(binwidth = c(5, 5))
+#ggplot(dat_depth, aes( Lon, Lat))+
+#  geom_hex(binwidth = c(5, 5))
 
 
 dat_1800 <- dat %>% filter(Year<1850)
 dim(dat_1800)
 dat_2000 <-   dat %>% filter(Year>1960 & Year<2010)
 dim(dat_2000)  
-
 dat_2100 <-   dat %>% filter(Year>2050)
 dim(dat_2100) 
 
@@ -73,7 +85,7 @@ norm_2000 <- calculate_normals(dat_2000)
 norm_2100 <- calculate_normals(dat_2100)
 head(norm_1800)
 head(norm_2000)
-
+head(norm_2100)
 
 #--------------------------------  
 ### data frame to link station number to Lat Long ####
@@ -223,20 +235,87 @@ dim(B)
 head(NN.sigma)
 
 NN.sigma[which(is.infinite(NN.sigma))] <- NA
-which(is.na(NN.sigma))
+#which(is.na(NN.sigma))
 tail(sort(NN.sigma))
 length(NN.sigma)
-world <- map_data("world2")
-dim(stationInfo)
+
 B2 <- data.frame(No=B$No, NN.sigma)
 B2 <- merge(B2, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
+
+# Visualize
+world <- map_data("world2")
+dim(stationInfo)
+
 Plot_nonInt(B2$lat, B2$long, 
             B2$NN.sigma, world, "sigma dis.")
 #write.csv(NN.sigma,"NN.sigma.RCP45.GlobalMean.2085.csv", row.names=FALSE)
+#write.csv(B2,"Sigma.RCP85.today_1800.csv", row.names=FALSE)
+B2<-fread("./data/Sigma.RCP85.today_1800.csv")
 
+##Interpolation for visualization
+B2a<-B2[!is.na(B2$NN.sigma),]
+
+B2a<-B2a[,c(4,3,2)]
+
+for(i in 1:nrow(B2a)){
+  if(B2a$long[i]>360){
+    B2a$long[i]<-B2a$long[i]-360
+  }
+}
+
+EB2 <- SpatialPoints(B2a) # this is your spatial points df
+
+# Project sp object to WGS 84
+proj4string(EB2) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84")
+
+# Create an empty grid; n = number of cells
+# Increase n to increase resolution
+gr <- as.data.frame(spsample(EB2, 'regular', n  = 50000))
+names(gr) <- c('X', 'Y')
+coordinates(gr) <- c('X', 'Y')
+gridded(gr) <- TRUE  
+fullgrid(gr) <- TRUE  # Create SpatialGrid object
+proj4string(gr) <- proj4string(EB2) 
+#If this line throws an error, run this
+# chunk again. It is a random grid.
+
+# Interpolate the grid cells using inverse distance weighing power = 8
+# NN.sigma ~ 1 = simple kriging
+EB2.idw <- idw(NN.sigma ~ 1, EB2, newdata = gr, idp = 8)
+
+# Convert to raster
+r <- raster(EB2.idw)
+
+world<-map("world2", fill=T,plot=F)
+y<-map2SpatialPolygons(world, IDs = sapply(strsplit(world$names, ":"), function(x) x[1]), proj4string=CRS("+proj=longlat +datum=WGS84"))
+z<-st_as_sf(y)
+wr <- raster(z, res = 0.01)
+wrld_r <- fasterize(z, wr)
+gplot_wrld_r <- gplot_data(wrld_r)
+
+gplot_r <- gplot_data(r)
+
+#Change scale_fill_gradient value to name of variable
+ggplot() +
+  geom_tile(data = gplot_r, 
+            aes(x = x, y = y, fill = value)) +
+  geom_tile(data = dplyr::filter(gplot_wrld_r, !is.na(value)), 
+            aes(x = x, y = y), fill = "grey20") +
+  xlim(0,360) +
+  ylim(-77,90) + 
+  xlab("Long") +
+  ylab("Lat") +
+  ggtitle("Sigma dissimilarity: Today from 1800") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_gradient2(expression(paste(sigma," dis.")),
+                       low = 'blue', mid = "yellow", high = 'red',
+                       midpoint = 4,
+                       limits=c(0,8.1),
+                       na.value = NA) +
+  coord_quickmap()
 
 #--------------------------------  
-### today analog to 2100 ####
+### Today analog to 2100 ####
 #--------------------------------
 identical(norm_2000$No, norm_2100$No)
 
@@ -283,7 +362,7 @@ proxy <- B$No
 
 
 ###-----------------------
-###### Calculation of sigma dissimilarity of today from 1800 ####
+###### Calculation of sigma dissimilarity of today from 2100 ####
 ###-----------------------
 
 # Principal component truncation rule
@@ -389,6 +468,9 @@ which(is.na(NN.sigma))
 tail(sort(NN.sigma))
 hist(NN.sigma)
 length(NN.sigma)
+
+#Visualize
+
 world <- map_data("world2")
 dim(stationInfo)
 B2 <- data.frame(No=B$No, NN.sigma)
@@ -396,6 +478,7 @@ B2 <- merge(B2, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
 Plot_nonInt(B2$lat, B2$long, 
             B2$NN.sigma, world, "sigma dis.")
 #write.csv(NN.sigma,"NN.sigma.RCP45.GlobalMean.2085.csv", row.names=FALSE)
+<<<<<<< HEAD
 
 
 ### Subset
@@ -427,3 +510,63 @@ plot(A$SST_sum, A$Arag_sum, xlim=c(-5, 35), ylim=c(-0.5,6))
 fa <- A2[which(A$SST_sum<10 &A$Arag_sum<1),] 
 Plot_nonInt(fa$lat, fa$long, 
             1, world, "sigma dis.")
+=======
+#write.csv(B2,"Sigma.RCP85.today_2100.csv", row.names=FALSE)
+B2<-fread("./data/Sigma.RCP85.today_2100.csv")
+
+#Visualize with interpolation
+B2a<-B2[!is.na(B2$NN.sigma),]
+
+B2a<-B2a[,c(4,3,2)]
+
+for(i in 1:nrow(B2a)){
+  if(B2a$long[i]>360){
+    B2a$long[i]<-B2a$long[i]-360
+  }
+}
+
+EB2 <- SpatialPoints(B2a) # this is your spatial points df
+
+# Project sp object to WGS 84
+proj4string(EB2) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84")
+
+# Function to create a random grid empty grid
+gr<-makeGrid(EB2)
+
+# Interpolate the grid cells using power value = 2
+# NN.sigma ~ 1 = simple kriging
+
+EB2.idw <- idw(NN.sigma ~ 1, EB2, newdata = gr, idp = 8)
+
+# Convert to raster
+r <- raster(EB2.idw)
+
+world<-map("world2", fill=T,plot=F)
+y<-map2SpatialPolygons(world, IDs = sapply(strsplit(world$names, ":"), function(x) x[1]), proj4string=CRS("+proj=longlat +datum=WGS84"))
+z<-st_as_sf(y)
+wr <- raster(z, res = 0.01)
+wrld_r <- fasterize(z, wr)
+gplot_wrld_r <- gplot_data(wrld_r)
+
+gplot_r <- gplot_data(r)
+
+#Change scale_fill_gradient value to name of variable
+ggplot() +
+  geom_tile(data = gplot_r, 
+            aes(x = x, y = y, fill = value)) +
+  geom_tile(data = dplyr::filter(gplot_wrld_r, !is.na(value)), 
+            aes(x = x, y = y), fill = "grey20") +
+  #xlim(2,358) +
+  ylim(-78,90) + 
+  xlab("Long") +
+  ylab("Lat") +
+  ggtitle("Sigma dissimilarity: Today from 2100") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_gradient2(expression(paste(sigma," dis.")),
+                      low = 'blue', mid = "yellow", high = 'red',
+                      midpoint = 4,
+                      limits=c(0,8.1),
+                      na.value = NA) +
+  coord_quickmap()
+
+>>>>>>> 2f7bb9b4ddcbe7004e37d5725fc5a7a2fb58dc1b
