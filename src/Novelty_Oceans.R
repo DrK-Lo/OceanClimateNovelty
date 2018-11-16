@@ -21,7 +21,7 @@ source("src/Novelty_Oceans_Functions.R")
 # -----------------------------
 ##these files were created in a separate script "Novelty_NA_LocalStPCA_InputData_Feb2016.R", except for the cru surrogates, which were created in the Oct2015 version. 
 
-dat <- fread("data/large_files/Data_OceNov.txt", sep = ",")
+dat <- fread("data/large_files/Katie_T_Ar_Ca_pH_RCP85.txt", sep = ",")
 head(dat)
 unique(dat$Year)
 cond <- dat$Lat > 40 & dat$Lat < 50
@@ -33,12 +33,13 @@ d2 <- dat[cond,]
 #ggplot(dat, aes( Lon, Lat))+
 #  geom_hex(binwidth = c(5, 5))
 
-dat_depth <- fread("Data_subsurface.txt", sep=",")
-head(dat_depth,100)
-sort(unique(dat_depth$Year))
-dat_depth$MonthDay <- dat_depth$Month + dat_depth$Day/30.5
-
-sort(unique(dat_depth$Depth))
+### Load depth data
+  #dat_depth <- fread("data/Data_subsurface.txt", sep=",")
+  #head(dat_depth,100)
+  #hist(dat_depth$Depth)
+  #sort(unique(dat_depth$Year))
+  #dat_depth$MonthDay <- dat_depth$Month + dat_depth$Day/30.5
+  #sort(unique(dat_depth$Depth))
 
 #cond <- dat_depth$No==5000 & dat_depth$Depth < 30
 #plot(dat_depth$MonthDay[cond], dat_depth$Temp[cond])
@@ -250,11 +251,30 @@ head(B)
 dim(B)
 # same columns as A
 
+plot(A$SST_sum, A$SST_win)
+points(B$SST_sum, B$SST_win, pch=19, col=adjustcolor("blue", 0.1))
+
+plot(A$Arag_sum, A$Arag_win)
+points(B$Arag_sum, B$Arag_win, pch=19, col=adjustcolor("blue", 0.5))
+
+plot(A$pH_sum, A$pH_win)
+points(B$pH_sum, B$pH_win, pch=19, col=adjustcolor("blue", 0.5))
+
+plot(A$SST_sum, A$Arag_sum)
+points(B$SST_sum, B$Arag_sum, pch=19, col=adjustcolor("blue", 0.5))
+
+plot(A$SST_sum, A$pH_sum)
+points(B$SST_sum, B$pH_sum, pch=19, col=adjustcolor("blue", 0.5))
+
+plot(A$Arag_sum, A$pH_sum)
+points(B$Arag_sum, B$pH_sum, pch=19, col=adjustcolor("blue", 0.5))
+
+
 # sanity check to make sure stations in right order
 identical(A$No, B$No) # should be true
 
 head(dat_2000)  
-C <- data.frame(dat_2000[,c(1,6,7,8)], dat_2000[,c(6,7,8)])
+C <- data.frame(dat_2000[,c(1,6:9)], dat_2000[,c(6:9)])
 head(C)
 
 C.id <- C$No
@@ -376,3 +396,34 @@ B2 <- merge(B2, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
 Plot_nonInt(B2$lat, B2$long, 
             B2$NN.sigma, world, "sigma dis.")
 #write.csv(NN.sigma,"NN.sigma.RCP45.GlobalMean.2085.csv", row.names=FALSE)
+
+
+### Subset
+head(dat_2000)
+cond_indop <- function(x){x$long<200 & x$long>150 & 
+  abs(x$lat) < 5}
+cond_antar <- function(x){x$long < 250 & x$long > 150 & x$lat < -60}
+
+head(norm_2000)
+head(stationInfo)
+
+A2 <- merge(norm_2000, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
+B2 <- merge(norm_2100, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
+
+
+## Plot indopacific
+whichindop_2000 <- which(cond_indop(A2))
+whichindop_2100 <-  which(cond_indop(B2))
+plot(A$SST_sum, A$Arag_sum, xlim=c(-5, 35), ylim=c(-0.5,6))
+  points(A$SST_sum[whichindop_2000], A$Arag_sum[whichindop_2000], col=adjustcolor("green",0.5))
+  points(B$SST_sum[whichindop_2100], B$Arag_sum[whichindop_2100], pch=19, col=adjustcolor("darkgreen", 0.5))
+  ## Plot antartica
+  whichantar_2000 <- which(cond_antar(A2))
+  whichantar_2100 <-  which(cond_antar(B2))
+  points(A$SST_sum[whichantar_2000], A$Arag_sum[whichantar_2000], xlim=c(-5, 10), ylim=c(-0.5, 3),  col=adjustcolor("lightblue", 0.5))
+  points(B$SST_sum[whichantar_2100], B$Arag_sum[whichantar_2100], pch=19, col=adjustcolor("blue", 0.5))
+
+# where is future antartic going to look like?
+fa <- A2[which(A$SST_sum<10 &A$Arag_sum<1),] 
+Plot_nonInt(fa$lat, fa$long, 
+            1, world, "sigma dis.")

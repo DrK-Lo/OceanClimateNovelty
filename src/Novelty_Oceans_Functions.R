@@ -41,10 +41,11 @@ calculate_normals <- function(dat1){
   Arag_sum <- tapply(x_sum$Arag,INDEX = x_sum$No,mean, rm.na=TRUE)
   length(Arag_sum)
   Calc_sum <- tapply(x_sum$Calc,INDEX = x_sum$No,mean, rm.na=TRUE)
+  pH_sum <- tapply(x_sum$pH,INDEX = x_sum$No,mean, rm.na=TRUE)
   length(Calc_sum)
   identical(names(SST_sum), names(Arag_sum))
   identical(names(Arag_sum), names(Calc_sum))
-  smr <- data.frame(No=as.integer(names(SST_sum)), SST_sum,Arag_sum,Calc_sum  )
+  smr <- data.frame(No=as.integer(names(SST_sum)), SST_sum,Arag_sum,Calc_sum, pH_sum  )
   head(smr)
   
   ## Winter calculations    
@@ -53,9 +54,10 @@ calculate_normals <- function(dat1){
   SST_win <- tapply(x_win$SST,INDEX = x_win$No,mean, rm.na=TRUE)
   Arag_win <- tapply(x_win$Arag,INDEX = x_win$No,mean, rm.na=TRUE)
   Calc_win <- tapply(x_win$Calc,INDEX = x_win$No,mean, rm.na=TRUE)
+  pH_win <- tapply(x_win$pH,INDEX = x_win$No,mean, rm.na=TRUE)
   identical(names(SST_win), names(Arag_win))
   identical(names(Arag_win), names(Calc_win))
-  wnt <- data.frame(No=as.integer(names(SST_win)), SST_win,Arag_win,Calc_win  )
+  wnt <- data.frame(No=as.integer(names(SST_win)), SST_win,Arag_win,Calc_win,pH_win  )
   head(wnt)
   
   # merge summer and winter data frames
