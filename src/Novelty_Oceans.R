@@ -1,5 +1,5 @@
 ### KE Lotterhos
-### Oct 2018
+### Oct 2018 - June 2019
 ### Northeastern University
 ### Mod. Áki - Nov. 2018 - June 2019
 
@@ -7,72 +7,54 @@
 ## written by Colin Mahony
 ## Supp Material of "A closer look at novel climates: new methods and insights at continental to landscape scales"
 
-# Plans
+# Current Plans
 # Compare 1800 analog (A) to today surface (B), with today's surface variability (C)
-# Compare today surface analog (A) to 2100 (B), with today's surface variability (C)
+# Compare today surface analog (A) to 2100-RCP8.5 (B), with today's surface variability (C)
+# Compare today surface analog (A) to 2100-RCP4.5 (B), with today's surface variability (C)
+
+# Future Plans
 # Compare today all depths analog (A) to 2100 (B), with today's surface variability (C)
 
-## Specify location of data
-#setwd("/Users/katie/Desktop/OceanClimateNovelty/") 
-setwd("~/Desktop/PostDoc/OceanClimateNovelty/")
+##################################
+#### System setup ####
+##################################
+## Specify location of data ####
+  setwd("/Users/katie/Desktop/Repos/OceanClimateNovelty/") 
+  #setwd("~/Desktop/PostDoc/OceanClimateNovelty/")
 
-#Create function that removes previous user installed packages to avoid masking
-clean_pkgs<-function(){
-  lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE)
-}
-#clean_pkgs() #Remove all non-essential previously called packages
+  source("src/Novelty_Oceans_Functions.R")
 
-source("src/Novelty_Oceans_Functions.R")
-
-##-----------------------------
+##################################
 #### Read in the input data ####
-# -----------------------------
-##these files were created in a separate script "Novelty_NA_LocalStPCA_InputData_Feb2016.R", except for the cru surrogates, which were created in the Oct2015 version. 
+##################################
 
-#<<<<<<< HEAD
-dat <- fread("data/large_files/Katie_T_Ar_Ca_pH_RCP85.txt", sep = ",")
-#dat <- fread("data/large_files/Katie_T_Ar_Ca_pH_RCP45.txt", sep = ",")
+dat8.5 <- fread("data/large_files/T_Ar_Ca_pH_RCP85.txt", sep = ",")
+dat4.5 <- fread("data/large_files/T_Ar_Ca_pH_RCP45.txt", sep = ",")
 
-#=======
-#dat <- fread("data/large_files/Data_OceNov.txt", sep = ",")
-#dat <- fread("data/large_files/ESM2M_2000_RCP8.5.txt", sep = ",")
-#>>>>>>> 2f7bb9b4ddcbe7004e37d5725fc5a7a2fb58dc1b
-head(dat)
-unique(dat$Year)
-cond <- dat$Lat > 40 & dat$Lat < 50
-d2 <- dat[cond,]
+head(dat8.5)
+head(dat4.5)
+unique(dat8.5$Year)
+unique(dat4.5$Year)
 
-#ggplot(d2, aes( Month, SST))+
-#  geom_hex(binwidth = c(0.5, 0.5))
+boxplot(dat8.5$pH ~ dat8.5$Year)
+boxplot(dat4.5$pH ~ dat4.5$Year)
+# note that these two datasets are exactly the same for years < 2000
 
-#ggplot(dat, aes( Lon, Lat))+
-#  geom_hex(binwidth = c(5, 5))
-
-### Load depth data
-  #dat_depth <- fread("data/Data_subsurface.txt", sep=",")
-  #head(dat_depth,100)
-  #hist(dat_depth$Depth)
-  #sort(unique(dat_depth$Year))
-  #dat_depth$MonthDay <- dat_depth$Month + dat_depth$Day/30.5
-  #sort(unique(dat_depth$Depth))
-
-#cond <- dat_depth$No==5000 & dat_depth$Depth < 30
-#plot(dat_depth$MonthDay[cond], dat_depth$Temp[cond])
-
-#ggplot(dat_depth, aes( Lon, Lat))+
-#  geom_hex(binwidth = c(5, 5))
-
-
-dat_1800 <- dat %>% filter(Year<1850)
-dim(dat_1800)
-dat_2000 <-   dat %>% filter(Year>1960 & Year<2010)
-dim(dat_2000)  
-dat_2100 <-   dat %>% filter(Year>2050)
-dim(dat_2100) 
 
 #--------------------------------
 #### 40-year climate normals ####
 #--------------------------------
+  
+  dat_1800 <- dat8.5 %>% filter(Year<1850)
+  dim(dat_1800)
+  dat_2000 <-   dat8.5 %>% filter(Year>1960 & Year<2010)
+  dim(dat_2000)  
+  dat_2100_8.5 <-   dat8.5 %>% filter(Year>2050)
+  dim(dat_2100_8.5) 
+  dat_2100_4.5 <-   dat4.5 %>% filter(Year>2050)
+  dim(dat_2100_4.5) 
+
+
   # summer  
     # (if Lat > 0, months 6,7,8)
     # (if Lat < 0, months 12,1,2)
@@ -82,9 +64,11 @@ dim(dat_2100)
   # means: SST_summer, SST_winter, Arag_summer, Arag_winter, 
           # Calc_summer, Calc_winter
 
-norm_1800 <- calculate_normals(dat_1800)
-norm_2000 <- calculate_normals(dat_2000)
-norm_2100 <- calculate_normals(dat_2100)
+  norm_1800 <- calculate_normals(dat_1800)
+  norm_2000 <- calculate_normals(dat_2000)
+  norm_2100_8.5 <- calculate_normals(dat_2100_8.5)
+  norm_2100_4.5 <- calculate_normals(dat_2100_8.5)
+
 head(norm_1800)
 head(norm_2000)
 head(norm_2100)
