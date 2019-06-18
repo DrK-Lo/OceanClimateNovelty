@@ -10,12 +10,8 @@
 ## Have SST, Arag, Calc, & pH
 #####################################################################################################################################################
 
-
-library(raster)
-library(rgdal)
-library(tmap)
-library(gstat) 
-library(sp)   
+setwd("~/Desktop/PostDoc/OceanClimateNovelty/")
+source("src/Novelty_Oceans_Functions.R")
 
 # IDW: http://pro.arcgis.com/en/pro-app/help/analysis/geostatistical-analyst/how-inverse-distance-weighted-interpolation-works.htm
 # tmap vignette: https://cran.r-project.org/web/packages/tmap/tmap.pdf
@@ -33,6 +29,7 @@ dat<-fread("data/large_files/Katie_T_Ar_Ca_pH_RCP85.txt", sep = ",")
 #Get 1800's data (1800, 1810, 1820, 1830)
 EJ<-dat[dat$Year<1970,]
 
+#Modify to column names
 EJ<-EJ[EJ$Month==1,]
 EJA<-EJ[,c(2,3,9)] #6 for SST, 7 for Arag, 8 for Calc, 9 for pH
 rownames(EJA)<-1:nrow(EJA)
@@ -49,23 +46,10 @@ TJ<-TJ[TJ$Month==1,]
 TJA<-TJ[,c(2,3,9)]#6 for SST, 7 for Arag, 8 for Calc, 9 for pH
 rownames(TJA)<-1:nrow(TJA)
 
-for(i in 1:nrow(EJA)){
-  if(EJA$Lon[i]>360){
-    EJA$Lon[i]<-EJA$Lon[i]-360
-  }
-}
+EJA[Lon>360,Lon:=Lon-360]
+NJA[Lon>360,Lon:=Lon-360]
+TJA[Lon>360,Lon:=Lon-360]
 
-for(i in 1:nrow(NJA)){
-  if(NJA$Lon[i]>360){
-    NJA$Lon[i]<-NJA$Lon[i]-360
-  }
-}
-
-for(i in 1:nrow(TJA)){
-  if(TJA$Lon[i]>360){
-    TJA$Lon[i]<-TJA$Lon[i]-360
-  }
-}
 #EJA <- SpatialPoints(EJA , proj4string=CRS("+proj=longlat +datum=WGS84")) # this is your spatial points data frame
 
 #head(EJA)
@@ -73,10 +57,10 @@ EJA$Lon <- EJA$Lon - 180 # convert to WGS 1984 bounds
 EJA <- SpatialPoints(EJA) # this is your spatial points df
 
 NJA$Lon <- NJA$Lon - 180 # convert to WGS 1984 bounds
-EJA <- SpatialPoints(EJA) # this is your spatial points df
+NJA <- SpatialPoints(NJA) # this is your spatial points df
 
-EJA$Lon <- EJA$Lon - 180 # convert to WGS 1984 bounds
-EJA <- SpatialPoints(EJA) # this is your spatial points df
+TJA$Lon <- TJA$Lon - 180 # convert to WGS 1984 bounds
+TJA <- SpatialPoints(TJA) # this is your spatial points df
 
 # Project sp object to WGS 84
 proj4string(EJA) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84")
@@ -97,6 +81,11 @@ proj4string(gr) <- proj4string(EJA) # If this line throws an error, run this
 #proj4string(gr) <- proj4string(NJA)
 #proj4string(gr) <- proj4string(TJA)
 
+require(doParallel)
+cores <- 3
+cl <- makeCluster(cores)
+registerDoParallel(cl)
+
 # Interpolate the grid cells using power value = 2
 # Arag ~ 1 = simple kriging
 #EJA.idw <- idw(Arag ~ 1, EJA, newdata = gr, idp = 2)
@@ -104,6 +93,7 @@ EJA.idw <- idw(pH ~ 1, EJA, newdata = gr, idp = 2)
 NJA.idw <- idw(pH ~ 1, NJA, newdata = gr, idp = 2)
 TJA.idw <- idw(pH ~ 1, TJA, newdata = gr, idp = 2)
 
+stopCluster()
 # Convert to raster
 r <- raster(EJA.idw)
 #r <- raster(NJA.idw)
@@ -117,7 +107,7 @@ data('World', package = 'tmap')
 # Per the tmap vignette, I think I can layer shapes..
     tm_shape(r) + 
     tm_raster(n = 12, palette = 'Blues', # n = 10 may be better
-            title = "Aragonite concentration \n in Jan. 1800 (units here)") + 
+            title = "pH \n in Jan. 1800 (units here)") + 
             #title = "Aragonite concentration \n in Jan. 1970 (units here)") + 
             #title = "Aragonite concentration \n in Jan. 2070 (units here)") + 
   tm_legend(legend.outside = TRUE) +
