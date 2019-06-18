@@ -44,7 +44,8 @@ boxplot(dat4.5$pH ~ dat4.5$Year)
 #--------------------------------
 #### 40-year climate normals ####
 #--------------------------------
-  
+  # for example, 1930 represents from 1/1/1925 to 12/31/1934.  
+
   dat_1800 <- dat8.5 %>% filter(Year<1850)
   dim(dat_1800)
   dat_2000 <-   dat8.5 %>% filter(Year>1960 & Year<2010)
@@ -69,9 +70,10 @@ boxplot(dat4.5$pH ~ dat4.5$Year)
   norm_2100_8.5 <- calculate_normals(dat_2100_8.5)
   norm_2100_4.5 <- calculate_normals(dat_2100_8.5)
 
-head(norm_1800)
-head(norm_2000)
-head(norm_2100)
+dim(norm_1800)
+dim(norm_2000)
+dim(norm_2100_8.5)
+dim(norm_2100_4.5)
 
 #--------------------------------  
 ### data frame to link station number to Lat Long ####

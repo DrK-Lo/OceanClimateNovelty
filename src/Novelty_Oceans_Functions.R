@@ -95,7 +95,6 @@ calculate_normals <- function(dat1){
   #head(normals)
   cond <- which(!complete.cases(normals))
   normals[cond,]
-  
   return(normals[order(normals$No),])
 }
 
