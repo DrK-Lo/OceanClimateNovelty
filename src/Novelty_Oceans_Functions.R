@@ -24,6 +24,10 @@ library(maptools)
 library(sf)
 library(fasterize)
 library(fansi)
+library(raster)
+library(tmap)
+library(gstat) 
+library(sp) 
 
 #Create function that removes previous user installed packages to avoid masking
 clean_pkgs<-function(){
