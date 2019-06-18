@@ -1,7 +1,7 @@
 ### KE Lotterhos
 ### Oct 2018
 ### Northeastern University
-### Mod. Áki - Nov. 2018
+### Mod. Áki - Nov. 2018 - June 2019
 
 ## Based on basic code for calculating and mapping climatic novelty using the sigma dissimilarity metric. 
 ## written by Colin Mahony
@@ -14,7 +14,7 @@
 
 ## Specify location of data
 #setwd("/Users/katie/Desktop/OceanClimateNovelty/") 
-setwd("~/Desktop/PostDoc/NovelOceanClim/OceanClimateNovelty/")
+setwd("~/Desktop/PostDoc/OceanClimateNovelty/")
 
 #Create function that removes previous user installed packages to avoid masking
 clean_pkgs<-function(){
@@ -29,12 +29,14 @@ source("src/Novelty_Oceans_Functions.R")
 # -----------------------------
 ##these files were created in a separate script "Novelty_NA_LocalStPCA_InputData_Feb2016.R", except for the cru surrogates, which were created in the Oct2015 version. 
 
-<<<<<<< HEAD
-dat <- fread("data/large_files/Katie_T_Ar_Ca_pH_RCP85.txt", sep = ",")
-=======
+#<<<<<<< HEAD
+dat <- fread("data/Katie_T_Ar_Ca_pH_RCP85.txt", sep = ",")
+#dat <- fread("data/Katie_T_Ar_Ca_pH_RCP45.txt", sep = ",")
+
+#=======
 #dat <- fread("data/large_files/Data_OceNov.txt", sep = ",")
-dat <- fread("data/large_files/ESM2M_2000_RCP8.5.txt", sep = ",")
->>>>>>> 2f7bb9b4ddcbe7004e37d5725fc5a7a2fb58dc1b
+#dat <- fread("data/large_files/ESM2M_2000_RCP8.5.txt", sep = ",")
+#>>>>>>> 2f7bb9b4ddcbe7004e37d5725fc5a7a2fb58dc1b
 head(dat)
 unique(dat$Year)
 cond <- dat$Lat > 40 & dat$Lat < 50
@@ -110,8 +112,8 @@ which(!complete.cases(stationInfo))
 #--------------------------------
 length(norm_1800$No)
 length(norm_2000$No)
-  # subset the 2000 data to the same stations as the 1800 data
 
+# subset the 2000 data to the same stations as the 1800 data
 A <- norm_1800
   # 1800-1830 climate normals
   head(A)
@@ -250,7 +252,7 @@ Plot_nonInt(B2$lat, B2$long,
             B2$NN.sigma, world, "sigma dis.")
 #write.csv(NN.sigma,"NN.sigma.RCP45.GlobalMean.2085.csv", row.names=FALSE)
 #write.csv(B2,"Sigma.RCP85.today_1800.csv", row.names=FALSE)
-B2<-fread("./data/Sigma.RCP85.today_1800.csv")
+#B2<-fread("./data/Sigma.RCP85.today_1800.csv")
 
 ##Interpolation for visualization
 B2a<-B2[!is.na(B2$NN.sigma),]
@@ -478,7 +480,7 @@ B2 <- merge(B2, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
 Plot_nonInt(B2$lat, B2$long, 
             B2$NN.sigma, world, "sigma dis.")
 #write.csv(NN.sigma,"NN.sigma.RCP45.GlobalMean.2085.csv", row.names=FALSE)
-<<<<<<< HEAD
+#<<<<<<< HEAD
 
 
 ### Subset
@@ -510,7 +512,7 @@ plot(A$SST_sum, A$Arag_sum, xlim=c(-5, 35), ylim=c(-0.5,6))
 fa <- A2[which(A$SST_sum<10 &A$Arag_sum<1),] 
 Plot_nonInt(fa$lat, fa$long, 
             1, world, "sigma dis.")
-=======
+#=======
 #write.csv(B2,"Sigma.RCP85.today_2100.csv", row.names=FALSE)
 B2<-fread("./data/Sigma.RCP85.today_2100.csv")
 
@@ -569,4 +571,4 @@ ggplot() +
                       na.value = NA) +
   coord_quickmap()
 
->>>>>>> 2f7bb9b4ddcbe7004e37d5725fc5a7a2fb58dc1b
+#>>>>>>> 2f7bb9b4ddcbe7004e37d5725fc5a7a2fb58dc1b
