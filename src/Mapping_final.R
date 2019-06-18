@@ -21,8 +21,8 @@ library(sp)
 # tmap vignette: https://cran.r-project.org/web/packages/tmap/tmap.pdf
 # setwd(../data/)
 
-dat<-fread("data/Katie_T_Ar_Ca_pH_RCP85.txt", sep = ",")
-#dat<-fread("data/Katie_T_Ar_Ca_pH_RCP45.txt", sep = ",")
+dat<-fread("data/large_files/Katie_T_Ar_Ca_pH_RCP85.txt", sep = ",")
+#dat<-fread("data/large_files/Katie_T_Ar_Ca_pH_RCP45.txt", sep = ",")
 
 #for(i in 1:nrow(dat)){
 #  if(dat$Lon[i]>360){

@@ -30,8 +30,8 @@ source("src/Novelty_Oceans_Functions.R")
 ##these files were created in a separate script "Novelty_NA_LocalStPCA_InputData_Feb2016.R", except for the cru surrogates, which were created in the Oct2015 version. 
 
 #<<<<<<< HEAD
-dat <- fread("data/Katie_T_Ar_Ca_pH_RCP85.txt", sep = ",")
-#dat <- fread("data/Katie_T_Ar_Ca_pH_RCP45.txt", sep = ",")
+dat <- fread("data/large_files/Katie_T_Ar_Ca_pH_RCP85.txt", sep = ",")
+#dat <- fread("data/large_files/Katie_T_Ar_Ca_pH_RCP45.txt", sep = ",")
 
 #=======
 #dat <- fread("data/large_files/Data_OceNov.txt", sep = ",")
