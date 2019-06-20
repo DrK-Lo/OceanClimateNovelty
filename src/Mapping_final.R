@@ -31,19 +31,19 @@ EJ<-dat[dat$Year<1970,]
 
 #Modify to column names
 EJ<-EJ[EJ$Month==1,]
-EJA<-EJ[,c(2,3,9)] #6 for SST, 7 for Arag, 8 for Calc, 9 for pH
+EJA<-EJ[,c("Lon","Lat","SST")] #Options are SST, Arag, Calc, and pH
 rownames(EJA)<-1:nrow(EJA)
 
 #Get 1900's data (1970, 1980, 1990, 2000)
 NJ<-dat[which(dat$Year>1830 & dat$Year<2070),]
 NJ<-NJ[NJ$Month==1,]
-NJA<-NJ[,c(2,3,9)]#6 for SST, 7 for Arag, 8 for Calc, 9 for pH
+NJA<-NJ[,c("Lon","Lat","SST")] #Options are SST, Arag, Calc, and pH
 rownames(NJA)<-1:nrow(NJA)
 
 #Get 2000's data (2070, 2080, 2090, 2100)
 TJ<-dat[dat$Year>2000,]
 TJ<-TJ[TJ$Month==1,]
-TJA<-TJ[,c(2,3,9)]#6 for SST, 7 for Arag, 8 for Calc, 9 for pH
+TJA<-TJ[,c("Lon","Lat","SST")] #Options are SST, Arag, Calc, and pH
 rownames(TJA)<-1:nrow(TJA)
 
 EJA[Lon>360,Lon:=Lon-360]
@@ -69,47 +69,75 @@ proj4string(TJA) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84")
 
 # Create an empty grid; n = number of cells
 # Increase n to increase resolution
-gr <- as.data.frame(spsample(EJA, 'regular', n  = 50000))
+
+#gr <- as.data.frame(spsample(EJA, 'regular', n  = 50000))
 #gr <- as.data.frame(spsample(NJA, 'regular', n  = 50000))
 #gr <- as.data.frame(spsample(TJA, 'regular', n  = 50000))
+
+r<-NULL
+
+MakeRast<-function(data){
+  while(class(r)=="NULL"){
+  gr <- as.data.frame(spsample(data, 'regular', n  = 50000))
+  names(gr) <- c('X', 'Y')
+  coordinates(gr) <- c('X', 'Y')
+  gridded(gr) <- TRUE  
+  fullgrid(gr) <- TRUE 
+  proj4string(gr) <- proj4string(data)# If this line throws an error, run this
+  # chunk again. It is a random grid.
+  data.idw <- idw(pH ~ 1, data, newdata = gr, idp = 2)
+  r <- raster(data.idw)
+  }
+}
+  
+MakeRast(EJA)
+
 names(gr) <- c('X', 'Y')
 coordinates(gr) <- c('X', 'Y')
 gridded(gr) <- TRUE  
 fullgrid(gr) <- TRUE  # Create SpatialGrid object
-proj4string(gr) <- proj4string(EJA) # If this line throws an error, run this
+#proj4string(gr) <- proj4string(EJA) # If this line throws an error, run this
 # chunk again. It is a random grid.
 #proj4string(gr) <- proj4string(NJA)
-#proj4string(gr) <- proj4string(TJA)
+proj4string(gr) <- proj4string(TJA)
 
-require(doParallel)
-cores <- 3
-cl <- makeCluster(cores)
-registerDoParallel(cl)
+# Interpolate the grid cells using power value = 2
+EJA.idw <- idw(pH ~ 1, EJA, newdata = gr, idp = 2)
+
+# Convert to raster
+r <- raster(EJA.idw)
+
+#require(doParallel)
+#cores <- 3
+#cl <- makeCluster(cores)
+#registerDoParallel(cl)
 
 # Interpolate the grid cells using power value = 2
 # Arag ~ 1 = simple kriging
-#EJA.idw <- idw(Arag ~ 1, EJA, newdata = gr, idp = 2)
+
 EJA.idw <- idw(pH ~ 1, EJA, newdata = gr, idp = 2)
+
 NJA.idw <- idw(pH ~ 1, NJA, newdata = gr, idp = 2)
+
 TJA.idw <- idw(pH ~ 1, TJA, newdata = gr, idp = 2)
 
-stopCluster()
+#stopCluster()
+
 # Convert to raster
 r <- raster(EJA.idw)
-#r <- raster(NJA.idw)
-#r <- raster(TJA.idw)
+r <- raster(NJA.idw)
+r <- raster(TJA.idw)
 
 # Load continents
 data('World', package = 'tmap') 
 # World is a {sf} df of countries
 
 # Plot
-# Per the tmap vignette, I think I can layer shapes..
-    tm_shape(r) + 
+tm_shape(r) + 
     tm_raster(n = 12, palette = 'Blues', # n = 10 may be better
-            title = "pH \n in Jan. 1800 (units here)") + 
-            #title = "Aragonite concentration \n in Jan. 1970 (units here)") + 
-            #title = "Aragonite concentration \n in Jan. 2070 (units here)") + 
+            #title = "pH \n in Jan. 1800") + 
+            #title = "pH \n in Jan. 1970") + 
+            title = "pH \n in Jan. 2070") + 
   tm_legend(legend.outside = TRUE) +
   tm_shape(World) + 
       tm_fill()
