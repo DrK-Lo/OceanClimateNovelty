@@ -36,8 +36,8 @@ head(dat4.5)
 unique(dat8.5$Year)
 unique(dat4.5$Year)
 
-boxplot(dat8.5$pH ~ dat8.5$Year)
-boxplot(dat4.5$pH ~ dat4.5$Year)
+#boxplot(dat8.5$pH ~ dat8.5$Year)
+#boxplot(dat4.5$pH ~ dat4.5$Year)
 # note that these two datasets are exactly the same for years < 2000
 
 
@@ -68,45 +68,41 @@ boxplot(dat4.5$pH ~ dat4.5$Year)
   norm_1800 <- calculate_normals(dat_1800)
   norm_2000 <- calculate_normals(dat_2000)
   norm_2100_8.5 <- calculate_normals(dat_2100_8.5)
-  norm_2100_4.5 <- calculate_normals(dat_2100_8.5)
+  norm_2100_4.5 <- calculate_normals(dat_2100_4.5)
 
-dim(norm_1800)
-dim(norm_2000)
-dim(norm_2100_8.5)
-dim(norm_2100_4.5)
+  dim(norm_1800)
+  dim(norm_2000)
+  dim(norm_2100_8.5)
+  dim(norm_2100_4.5)
 
 #--------------------------------  
 ### data frame to link station number to Lat Long ####
 #--------------------------------
-head(dat)
-min(which(dat$No==2))
-stations <- unique(dat$No)
-stationInfo = data.frame(stations=stations, lat=NA, long=NA)
-unik <- which(!duplicated(dat$No))
-head(unik)
-stationInfo$lat <- dat$Lat[unik]
-stationInfo$long <- dat$Lon[unik]
-
-head(stationInfo)
-which(!complete.cases(stationInfo))
-
-
+  head(dat8.5)
+  stations <- unique(dat8.5$No)
+  stationInfo = data.frame(stations=stations, lat=NA, long=NA)
+  unik <- which(!duplicated(dat8.5$No))
+  head(unik)
+  stationInfo$lat <- dat8.5$Lat[unik]
+  stationInfo$long <- dat8.5$Lon[unik]
+  names(stationInfo)[1] <- "No"
+  head(stationInfo)
+  which(!complete.cases(stationInfo))
 
 
 #--------------------------------  
 ### 1800 analog to today ####
 #--------------------------------
-length(norm_1800$No)
-length(norm_2000$No)
-
-# subset the 2000 data to the same stations as the 1800 data
-A <- norm_1800
-  # 1800-1830 climate normals
+  length(norm_1800$No)
+  length(norm_2000$No)
+  A <- norm_1800
+  # 1800 climate normals
   head(A)
   dim(A)
   
-B <- norm_2000[norm_2000$No %in% norm_1800$No,]
-  # 1970-2000 climate normals 
+  # subset the 2000 data to the same stations as the 1800 data
+  B <- norm_2000[norm_2000$No %in% norm_1800$No,]
+  # 2000 climate normals 
   head(B)
   dim(B)
   # same columns as A
@@ -115,360 +111,129 @@ B <- norm_2000[norm_2000$No %in% norm_1800$No,]
   identical(A$No, B$No) # should be true
   
   head(dat_2000)  
-C <- data.frame(dat_2000[,c(1,6,7,8)], dat_2000[,c(6,7,8)])
-head(C)
-
-C.id <- C$No
-proxy <- B$No
-
-###-----------------------
-### Calculation of sigma dissimilarity of today from 1800 ####
-###-----------------------
-
-# Principal component truncation rule
-trunc.SDs <- 0.1 #truncation 
+  (whichcols <- which(names(dat_2000) %in% c("SST", "Arag", "Calc", "pH")))
+  C <- data.frame(dat_2000[,c(1, whichcols)], dat_2000[,c( whichcols)])
+  head(C)
   
-#initiate the data frame to store the projected sigma dissimilarity of best analogs for each grid cell. 
-NN.sigma <- rep(NA,length(proxy))
-
-for(j in sort(unique(proxy))){       
-  # run the novelty calculation once for each ICV proxy. 
-  # Takes about 1.5 sec/iteration on a typical laptop. 
+  NN.sigma_1800_today <- loop_sigma_D(A, B, C)
+  dim(A)
+  dim(B)
+  head(NN.sigma_1800_today)
   
-  ## Select data relevant to ICV proxy j
-  Bj <- B[which(proxy==j),]   # future climates
-    # select locations for which ICV proxy j is the closest ICV proxy. 
-  Cj <- C[which(C.id==j),]    # reference period ICV at ICV proxy j
+  final_dat <- full_join(NN.sigma_1800_today, stationInfo, by="No")
+  head(final_dat)
   
-  ## Step 1: express climate data as standardized anomalies of reference period 
-  #  ICV at ICV proxy j. 
-  Cj.sd <- apply(Cj,2,sd, na.rm=T)  #standard deviation of interannual variability in each climate variable, ignoring missing years
-    #standard deviation of variability in each climate 
-    # variable, ignoring missing years
-  A.prime <- sweep(A[,2:7],MARGIN=2,Cj.sd[2:7],`/`) #standardize the reference ICV
-    # a <- matrix(c(1,2,3,4,5,6), nrow=2)
-    # sweep(a, MARGIN =2, STATS=c(2,3,4)) # subtracts STATs from each column
-    # sweep(a, MARGIN =2, STATS=c(2,3,4), FUN=`/`) # divides each column by STATS
-  Bj.prime <- sweep(Bj[,2:7],MARGIN=2,Cj.sd[2:7],`/`) #standardize the analog pool    
-  Cj.prime <- sweep(Cj[,2:7],MARGIN=2,Cj.sd[2:7],`/`) #standardize the projected future conditions of grid cells represented by ICV proxy j
+  final_dat[which(is.infinite(final_dat$NN.sigma_1800_today)),]
   
-  colnames(Cj.prime) <- colnames(A.prime)
-  ## Step 2: Extract the principal components (PCs) of the reference period ICV 
-    # and project all data onto these PCs
-  PCA <- prcomp(Cj.prime[!is.na(apply(Cj.prime,1,mean)),])   
-    # Principal components analysis. The !is.na(apply(...)) term is there 
-    # simply to select all years with complete observations in all variables. 
-  PCA$rotation
+  final_dat[which(!complete.cases(final_dat)),]
   
-  #plot(PCA$rotation[,1], PCA$rotation[,2], xlim=c(-0.43, -0.39))
-  #text(PCA$rotation[,1], PCA$rotation[,2], rownames(PCA$rotation))
-  # SST summer and winter in lower right of PC space, 
-  # Arag and Calc in upper left of PC space
+  #NN.sigma_1800_today[which(is.infinite(NN.sigma_1800_today))] <- NA
+ 
+  head(final_dat)
+  identical(nrow(final_dat), nrow(stationInfo)) 
+    # should be true, same number as stations as stationInfo
+  dim(B)
   
-  #plot(PCA$rotation[,1], PCA$rotation[,3], xlim=c(-0.43, -0.39))
-  #text(PCA$rotation[,1], PCA$rotation[,3], rownames(PCA$rotation))
-  # separates the three variables
+  # Visualize
+  world <- map_data("world2")
+  Plot_nonInt(final_dat$lat, final_dat$long, 
+              final_dat$NN.sigma_1800_today, world, "sigma dis.")
   
-  #plot(PCA$sdev)
-  #round(PCA$sdev, 2)
-  
-  PCs <- max(which(unlist(summary(PCA)[1])>trunc.SDs))    
-    # find the number of PCs to retain using the PC truncation 
-    # rule of eigenvector stdev > the truncation threshold
-  X <- as.data.frame(predict(PCA,A.prime))   
-    # project the analog pool onto the PCs
-    head(X)
-    
-  Yj <- as.data.frame(predict(PCA,Bj.prime)) 
-    # project the projected future conditions onto the PCs
-    
-  Zj <- as.data.frame(predict(PCA,Cj.prime)) 
-    # project the reference ICV onto the PCs
-    
-  
-    #plot(X[,1], X[,2]) # analog
-    #points(Zj[,1], Zj[,2], pch=19, col=rgb(1,0,0, 0.5)) # reference ICV
-    #points(Yj[,1], Yj[,2], pch=19, col=rgb(0,1,0)) # future conditions
-    
-        
-  ## Step 3a: express PC scores as standardized anomalies of reference interannual variability 
-  Zj.sd <- apply(Zj,2,sd, na.rm=T)     
-    #standard deviation of 1951-1990 interannual variability in each principal component, ignoring missing years
-    #Zj.sd
-  X.prime <- sweep(X,MARGIN=2,Zj.sd,`/`) 
-    #standardize the analog pool  
-    #head(X.prime)
-  Yj.prime <- sweep(Yj,MARGIN=2,Zj.sd,`/`) 
-    #standardize the projected conditions   
-    #Yj.prime
-  ## Step 3b: find the sigma dissimilarity of each projected condition with 
-  # its best analog (Euclidean nearest neighbour) in the observed analog pool.
-    X.prime <- X.prime[complete.cases(X.prime),]
-  NN.dist <- as.vector(get.knnx(data=X.prime[,1:PCs],
-                                query=Yj.prime[,1:PCs],
-                                k=1,algorithm="brute")[[2]]) 
-    # Euclidean nearest neighbour distance in the z-standardized PCs of 
-    # interannual climatic variability, i.e. the Mahalanobian nearest neighbour. 
-  NN.chi <- pchi(NN.dist,PCs) # percentile of the nearest neighbour 
-    # distance on the chi distribution with degrees of freedom 
-    # equaling the dimensionality of the distance measurement (PCs)
-  NN.sigma[which(proxy==j)] <- qchi(NN.chi,1) 
-    # values of the chi percentiles on a standard half-normal distribution (chi distribution with one degree of freedom)
-  
-  if(j%%10==0){print(j)}
-}
-
-dim(A)
-dim(B)
-head(NN.sigma)
-
-NN.sigma[which(is.infinite(NN.sigma))] <- NA
-#which(is.na(NN.sigma))
-tail(sort(NN.sigma))
-length(NN.sigma)
-
-B2 <- data.frame(No=B$No, NN.sigma)
-B2 <- merge(B2, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
-
-# Visualize
-world <- map_data("world2")
-dim(stationInfo)
-
-Plot_nonInt(B2$lat, B2$long, 
-            B2$NN.sigma, world, "sigma dis.")
-#write.csv(NN.sigma,"NN.sigma.RCP45.GlobalMean.2085.csv", row.names=FALSE)
-#write.csv(B2,"Sigma.RCP85.today_1800.csv", row.names=FALSE)
-#B2<-fread("./data/Sigma.RCP85.today_1800.csv")
-
-##Interpolation for visualization
-B2a<-B2[!is.na(B2$NN.sigma),]
-
-B2a<-B2a[,c(4,3,2)]
-
-for(i in 1:nrow(B2a)){
-  if(B2a$long[i]>360){
-    B2a$long[i]<-B2a$long[i]-360
-  }
-}
-
-EB2 <- SpatialPoints(B2a) # this is your spatial points df
-
-# Project sp object to WGS 84
-proj4string(EB2) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84")
-
-# Create an empty grid; n = number of cells
-# Increase n to increase resolution
-gr <- as.data.frame(spsample(EB2, 'regular', n  = 50000))
-names(gr) <- c('X', 'Y')
-coordinates(gr) <- c('X', 'Y')
-gridded(gr) <- TRUE  
-fullgrid(gr) <- TRUE  # Create SpatialGrid object
-proj4string(gr) <- proj4string(EB2) 
-#If this line throws an error, run this
-# chunk again. It is a random grid.
-
-# Interpolate the grid cells using inverse distance weighing power = 8
-# NN.sigma ~ 1 = simple kriging
-EB2.idw <- idw(NN.sigma ~ 1, EB2, newdata = gr, idp = 8)
-
-# Convert to raster
-r <- raster(EB2.idw)
-
-world<-map("world2", fill=T,plot=F)
-y<-map2SpatialPolygons(world, IDs = sapply(strsplit(world$names, ":"), function(x) x[1]), proj4string=CRS("+proj=longlat +datum=WGS84"))
-z<-st_as_sf(y)
-wr <- raster(z, res = 0.01)
-wrld_r <- fasterize(z, wr)
-gplot_wrld_r <- gplot_data(wrld_r)
-
-gplot_r <- gplot_data(r)
-
-#Change scale_fill_gradient value to name of variable
-ggplot() +
-  geom_tile(data = gplot_r, 
-            aes(x = x, y = y, fill = value)) +
-  geom_tile(data = dplyr::filter(gplot_wrld_r, !is.na(value)), 
-            aes(x = x, y = y), fill = "grey20") +
-  xlim(0,360) +
-  ylim(-77,90) + 
-  xlab("Long") +
-  ylab("Lat") +
-  ggtitle("Sigma dissimilarity: Today from 1800") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  scale_fill_gradient2(expression(paste(sigma," dis.")),
-                       low = 'blue', mid = "yellow", high = 'red',
-                       midpoint = 4,
-                       limits=c(0,8.1),
-                       na.value = NA) +
-  coord_quickmap()
-
 #--------------------------------  
-### Today analog to 2100 ####
+### Today analog to 2100 RCP 8.5 ####
 #--------------------------------
-identical(norm_2000$No, norm_2100$No)
+  identical(norm_2000$No, norm_2100_8.5$No)
 
-A <- norm_2000
-# 1970-2000 climate normals
-head(A)
-dim(A)
+  A1 <- norm_2000
+  # 1970-2000 climate normals
+  head(A1)
+  dim(A1)
 
-B <- norm_2100
-# 2070-2100
-head(B)
-dim(B)
-# same columns as A
+  B1 <- norm_2100_8.5
+  # 2070-2100
+  head(B1)
+  dim(B1)
+  # same columns as A
 
-plot(A$SST_sum, A$SST_win)
-points(B$SST_sum, B$SST_win, pch=19, col=adjustcolor("blue", 0.1))
+  # sanity check to make sure stations in right order
+  identical(A1$No, B1$No) # should be true
+  identical(A1$No, sort(A1$No)) # should also be true
 
-plot(A$Arag_sum, A$Arag_win)
-points(B$Arag_sum, B$Arag_win, pch=19, col=adjustcolor("blue", 0.5))
-
-plot(A$pH_sum, A$pH_win)
-points(B$pH_sum, B$pH_win, pch=19, col=adjustcolor("blue", 0.5))
-
-plot(A$SST_sum, A$Arag_sum)
-points(B$SST_sum, B$Arag_sum, pch=19, col=adjustcolor("blue", 0.5))
-
-plot(A$SST_sum, A$pH_sum)
-points(B$SST_sum, B$pH_sum, pch=19, col=adjustcolor("blue", 0.5))
-
-plot(A$Arag_sum, A$pH_sum)
-points(B$Arag_sum, B$pH_sum, pch=19, col=adjustcolor("blue", 0.5))
-
-
-# sanity check to make sure stations in right order
-identical(A$No, B$No) # should be true
-
-head(dat_2000)  
-C <- data.frame(dat_2000[,c(1,6:9)], dat_2000[,c(6:9)])
-head(C)
-
-C.id <- C$No
-proxy <- B$No
-
-
-
-###-----------------------
-###### Calculation of sigma dissimilarity of today from 2100 ####
-###-----------------------
-
-# Principal component truncation rule
-trunc.SDs <- 0.1 #truncation 
-
-#initiate the data frame to store the projected sigma dissimilarity of best analogs for each grid cell. 
-NN.sigma <- rep(NA,length(proxy))
-
-
-for(j in sort(unique(proxy))){       
-  # run the novelty calculation once for each ICV proxy. 
-  # Takes about 1.5 sec/iteration on a typical laptop. 
+  # C is the same defined above
+  NN.sigma_today_2100_8.5 <- loop_sigma_D(A1, B1, C)
+  names(NN.sigma_today_2100_8.5)[2:4] <- paste0(names(NN.sigma_today_2100_8.5)[2:4],"_today_2100_8.5")
   
-  ## Select data relevant to ICV proxy j
-  Bj <- B[which(proxy==j),]   # future climates
-  # select locations for which ICV proxy j is the closest ICV proxy. 
-  Cj <- C[which(C.id==j),]    # reference period ICV at ICV proxy j
+  which(is.infinite(NN.sigma_today_2100_8.5$NN.sigma_today_2100_8.5))
+  which(is.na(NN.sigma_today_2100_8.5$NN.sigma_today_2100_8.5))
   
-  ## Step 1: express climate data as standardized anomalies of reference period 
-  #  ICV at ICV proxy j. 
-  Cj.sd <- apply(Cj,2,sd, na.rm=T)  #standard deviation of interannual variability in each climate variable, ignoring missing years
-  #standard deviation of variability in each climate 
-  # variable, ignoring missing years
-  A.prime <- sweep(A[,2:7],MARGIN=2,Cj.sd[2:7],`/`) #standardize the reference ICV
-  # a <- matrix(c(1,2,3,4,5,6), nrow=2)
-  # sweep(a, MARGIN =2, STATS=c(2,3,4)) # subtracts STATs from each column
-  # sweep(a, MARGIN =2, STATS=c(2,3,4), FUN=`/`) # divides each column by STATS
-  Bj.prime <- sweep(Bj[,2:7],MARGIN=2,Cj.sd[2:7],`/`) #standardize the analog pool    
-  Cj.prime <- sweep(Cj[,2:7],MARGIN=2,Cj.sd[2:7],`/`) #standardize the projected future conditions of grid cells represented by ICV proxy j
+  final_dat2 <- full_join(NN.sigma_today_2100_8.5, final_dat, by="No")
+  head(final_dat2)
   
-  colnames(Cj.prime) <- colnames(A.prime)
-  ## Step 2: Extract the principal components (PCs) of the reference period ICV 
-  # and project all data onto these PCs
-  PCA <- prcomp(Cj.prime[!is.na(apply(Cj.prime,1,mean)),])   
-  # Principal components analysis. The !is.na(apply(...)) term is there 
-  # simply to select all years with complete observations in all variables. 
-  PCA$rotation
+  dim(final_dat2)
+  dim(stationInfo)
   
-  #plot(PCA$rotation[,1], PCA$rotation[,2], xlim=c(-0.43, -0.39))
-  #text(PCA$rotation[,1], PCA$rotation[,2], rownames(PCA$rotation))
-  # SST summer and winter in lower right of PC space, 
-  # Arag and Calc in upper left of PC space
-  
-  #plot(PCA$rotation[,1], PCA$rotation[,3], xlim=c(-0.43, -0.39))
-  #text(PCA$rotation[,1], PCA$rotation[,3], rownames(PCA$rotation))
-  # separates the three variables
-  
-  #plot(PCA$sdev)
-  #round(PCA$sdev, 2)
-  
-  PCs <- max(which(unlist(summary(PCA)[1])>trunc.SDs))    
-  # find the number of PCs to retain using the PC truncation 
-  # rule of eigenvector stdev > the truncation threshold
-  X <- as.data.frame(predict(PCA,A.prime))   
-  # project the analog pool onto the PCs
-  head(X)
-  
-  Yj <- as.data.frame(predict(PCA,Bj.prime)) 
-  # project the projected future conditions onto the PCs
-  
-  Zj <- as.data.frame(predict(PCA,Cj.prime)) 
-  # project the reference ICV onto the PCs
+  # Visualize
+  Plot_nonInt(final_dat2$lat, final_dat2$long, 
+              final_dat2$NN.sigma_today_2100_8.5, world, "sigma dis.")
   
   
-  #plot(X[,1], X[,2]) # analog
-  #points(Zj[,1], Zj[,2], pch=19, col=rgb(1,0,0, 0.5)) # reference ICV
-  #points(Yj[,1], Yj[,2], pch=19, col=rgb(0,1,0)) # future conditions
+#--------------------------------  
+### Today analog to 2100 RCP 4.5 ####
+#--------------------------------
+  identical(norm_2000$No, norm_2100_4.5$No)
+  
+  # A1 the same as above
+  
+  B2 <- norm_2100_4.5
+  # 2070-2100
+  head(B2)
+  dim(B2)
+  # same columns as A
+  
+  # sanity check to make sure stations in right order
+  identical(A1$No, B2$No) # should be true
+  identical(A1$No, sort(A1$No)) # should also be true
+  
+  # C is the same defined above
+  NN.sigma_today_2100_4.5 <- loop_sigma_D(A1, B2, C)
+
+  which(is.infinite(NN.sigma_today_2100_4.5$NN.sigma_today_2100_4.5))
+  which(is.na(NN.sigma_today_2100_4.5$NN.sigma_today_2100_4.5))
   
   
-  ## Step 3a: express PC scores as standardized anomalies of reference interannual variability 
-  Zj.sd <- apply(Zj,2,sd, na.rm=T)     
-  #standard deviation of 1951-1990 interannual variability in each principal component, ignoring missing years
-  #Zj.sd
-  X.prime <- sweep(X,MARGIN=2,Zj.sd,`/`) 
-  #standardize the analog pool  
-  #head(X.prime)
-  Yj.prime <- sweep(Yj,MARGIN=2,Zj.sd,`/`) 
-  #standardize the projected conditions   
-  #Yj.prime
-  ## Step 3b: find the sigma dissimilarity of each projected condition with 
-  # its best analog (Euclidean nearest neighbour) in the observed analog pool.
-  X.prime <- X.prime[complete.cases(X.prime),]
-  NN.dist <- as.vector(get.knnx(data=X.prime[,1:PCs],
-                                query=Yj.prime[,1:PCs],
-                                k=1,algorithm="brute")[[2]]) 
-  # Euclidean nearest neighbour distance in the z-standardized PCs of 
-  # interannual climatic variability, i.e. the Mahalanobian nearest neighbour. 
-  NN.chi <- pchi(NN.dist,PCs) # percentile of the nearest neighbour 
-  # distance on the chi distribution with degrees of freedom 
-  # equaling the dimensionality of the distance measurement (PCs)
-  NN.sigma[which(proxy==j)] <- qchi(NN.chi,1) 
-  # values of the chi percentiles on a standard half-normal distribution (chi distribution with one degree of freedom)
+  final_dat3 <- full_join(NN.sigma_today_2100_4.5, final_dat2, by="No")
+  head(final_dat3)
   
-  if(j%%10==0){print(j)}
-}
+  dim(final_dat3)
+  dim(stationInfo)
+  
+  
+  cond <- which(!complete.cases(final_dat3))
+  length(cond)
+  final_dat3[cond,]
+  
+  # Visualize
+  Plot_nonInt(final_dat3$lat, final_dat3$long, 
+              final_dat3$NN.sigma_today_2100_4.5, world, "sigma dis.")
+  
+  
+### Write to file ####
+write.csv(final_dat2, "results/SigmaD.csv", row.names = FALSE)
+  
 
-dim(A)
-dim(B)
-head(NN.sigma)
-which(is.infinite(NN.sigma))
-NN.sigma[which(is.infinite(NN.sigma))] <- NA
-which(is.na(NN.sigma))
-tail(sort(NN.sigma))
-hist(NN.sigma)
-length(NN.sigma)
+# Figure out NAs and NANs ###
+  stations 671 NA
+  station 773 NaN
+  
+  
 
-#Visualize
-
-world <- map_data("world2")
-dim(stationInfo)
-B2 <- data.frame(No=B$No, NN.sigma)
-B2 <- merge(B2, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
-Plot_nonInt(B2$lat, B2$long, 
-            B2$NN.sigma, world, "sigma dis.")
-#write.csv(NN.sigma,"NN.sigma.RCP45.GlobalMean.2085.csv", row.names=FALSE)
-#<<<<<<< HEAD
-
-
+  
+  
+  
+  
+  
+  
+  
 ### Subset
 head(dat_2000)
 cond_indop <- function(x){x$long<200 & x$long>150 & 
@@ -498,63 +263,3 @@ plot(A$SST_sum, A$Arag_sum, xlim=c(-5, 35), ylim=c(-0.5,6))
 fa <- A2[which(A$SST_sum<10 &A$Arag_sum<1),] 
 Plot_nonInt(fa$lat, fa$long, 
             1, world, "sigma dis.")
-#=======
-#write.csv(B2,"Sigma.RCP85.today_2100.csv", row.names=FALSE)
-B2<-fread("./data/Sigma.RCP85.today_2100.csv")
-
-#Visualize with interpolation
-B2a<-B2[!is.na(B2$NN.sigma),]
-
-B2a<-B2a[,c(4,3,2)]
-
-for(i in 1:nrow(B2a)){
-  if(B2a$long[i]>360){
-    B2a$long[i]<-B2a$long[i]-360
-  }
-}
-
-EB2 <- SpatialPoints(B2a) # this is your spatial points df
-
-# Project sp object to WGS 84
-proj4string(EB2) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84")
-
-# Function to create a random grid empty grid
-gr<-makeGrid(EB2)
-
-# Interpolate the grid cells using power value = 2
-# NN.sigma ~ 1 = simple kriging
-
-EB2.idw <- idw(NN.sigma ~ 1, EB2, newdata = gr, idp = 8)
-
-# Convert to raster
-r <- raster(EB2.idw)
-
-world<-map("world2", fill=T,plot=F)
-y<-map2SpatialPolygons(world, IDs = sapply(strsplit(world$names, ":"), function(x) x[1]), proj4string=CRS("+proj=longlat +datum=WGS84"))
-z<-st_as_sf(y)
-wr <- raster(z, res = 0.01)
-wrld_r <- fasterize(z, wr)
-gplot_wrld_r <- gplot_data(wrld_r)
-
-gplot_r <- gplot_data(r)
-
-#Change scale_fill_gradient value to name of variable
-ggplot() +
-  geom_tile(data = gplot_r, 
-            aes(x = x, y = y, fill = value)) +
-  geom_tile(data = dplyr::filter(gplot_wrld_r, !is.na(value)), 
-            aes(x = x, y = y), fill = "grey20") +
-  #xlim(2,358) +
-  ylim(-78,90) + 
-  xlab("Long") +
-  ylab("Lat") +
-  ggtitle("Sigma dissimilarity: Today from 2100") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  scale_fill_gradient2(expression(paste(sigma," dis.")),
-                      low = 'blue', mid = "yellow", high = 'red',
-                      midpoint = 4,
-                      limits=c(0,8.1),
-                      na.value = NA) +
-  coord_quickmap()
-
-#>>>>>>> 2f7bb9b4ddcbe7004e37d5725fc5a7a2fb58dc1b

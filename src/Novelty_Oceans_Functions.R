@@ -6,10 +6,10 @@
 
 
 #Create function that removes previous user installed packages to avoid masking
-clean_pkgs<-function(){
-  lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE)
-}
-clean_pkgs() #Remove all non-essential previously called packages
+#clean_pkgs<-function(){
+#  lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE)
+#}
+#clean_pkgs() #Remove all non-essential previously called packages
 
 packages_needed <- c("raster", "FNN", "RColorBrewer", "colorRamps", "adehabitatLT",
                      "data.table", "tidyverse", "fields", "ggplot2", "hexbin",
@@ -96,6 +96,140 @@ calculate_normals <- function(dat1){
   cond <- which(!complete.cases(normals))
   normals[cond,]
   return(normals[order(normals$No),])
+}
+
+
+#--------------------------------  
+### Calculate Sigma Dissimilarity ####
+#--------------------------------
+#initiate the data frame to store the projected sigma dissimilarity of best analogs for each grid cell. 
+
+loop_sigma_D <- function(A, B, C, append=""){
+  NN.sigma <- data.frame(No=A$No,NN.sigma=NA, NN.station=NA, NN.Mdist=NA)
+  
+  for(j in 1:nrow(NN.sigma)){ 
+    NN.sigma[j,2:4] <- calc_sigma_D(A, B, C, NN.sigma$No[j])
+    if(j%%10==0){print(c(j, "of", nrow(NN.sigma)))}
+  }
+  names(NN.sigma)[2:4] <- paste0(names(NN.sigma_today_2100_4.5)[2:4],append)
+  return(NN.sigma)
+}
+
+  
+calc_sigma_D <- function(A, B, C, whichStation){
+  # A is past climate
+  # B is future climate
+  # C is the data frame used to calculate the ICV
+  
+  if(!identical(dim(A), dim(B))){print("Error A and B different dimensions")}
+  if(ncol(A) != ncol(C)){print("Error A and C different number of columns")}
+  
+  C.id <- C$No
+  proxy <- B$No
+  length(proxy)
+  proxy2 <- sort(unique(proxy))
+  if(!identical(proxy, proxy2)){break}
+  
+  # Principal component truncation rule
+  trunc.SDs <- 0.1 #truncation 
+
+  j <- whichStation
+      
+    # run the novelty calculation once for each ICV proxy. 
+    # Takes about 1.5 sec/iteration on a typical laptop. 
+    
+    ## Select data relevant to ICV proxy j
+    Bj <- B[which(proxy==j),]   # future climates
+    # select locations for which ICV proxy j is the closest ICV proxy. 
+    Cj <- C[which(C.id==j),]    # reference period ICV at ICV proxy j
+    
+    ## Step 1: express climate data as standardized anomalies of reference period 
+    #  ICV at ICV proxy j. 
+    Cj.sd <- apply(Cj,2,sd, na.rm=T)  #standard deviation of interannual variability in each climate variable, ignoring missing years
+    #standard deviation of variability in each climate 
+    # variable, ignoring missing years
+    A.prime <- sweep(A[,-1],MARGIN=2,Cj.sd[-1],`/`) #standardize the reference ICV
+    # a <- matrix(c(1,2,3,4,5,6), nrow=2)
+    # sweep(a, MARGIN =2, STATS=c(2,3,4)) # subtracts STATs from each column
+    # sweep(a, MARGIN =2, STATS=c(2,3,4), FUN=`/`) # divides each column by STATS
+    Bj.prime <- sweep(Bj[,-1],MARGIN=2,Cj.sd[-1],`/`) #standardize the analog pool    
+    Cj.prime <- sweep(Cj[,-1],MARGIN=2,Cj.sd[-1],`/`) #standardize the projected future conditions of grid cells represented by ICV proxy j
+    
+    colnames(Cj.prime) <- colnames(A.prime)
+    ## Step 2: Extract the principal components (PCs) of the reference period ICV 
+    # and project all data onto these PCs
+    PCA <- prcomp(Cj.prime[!is.na(apply(Cj.prime,1,mean)),])   
+    # Principal components analysis. The !is.na(apply(...)) term is there 
+    # simply to select all years with complete observations in all variables. 
+    PCA$rotation
+    
+    #plot(PCA$rotation[,1], PCA$rotation[,2], xlim=c(-0.6, 0.1))
+    #text(PCA$rotation[1:4,1], PCA$rotation[1:4,2], rownames(PCA$rotation)[1:4])
+    # SST right of PC space, 
+    # Arag and Calc and pH in upper left of PC space
+    
+    #plot(PCA$rotation[,1], PCA$rotation[,3], xlim=c(-0.6, 0.1))
+    #text(PCA$rotation[1:4,1], PCA$rotation[1:4,3], rownames(PCA$rotation)[1:4])
+    # separates pH from Calc and Arag
+    
+    #plot(PCA$rotation[,1], PCA$rotation[,4], xlim=c(-0.6, 0.1))
+    #text(PCA$rotation[1:4,1], PCA$rotation[1:4,4], rownames(PCA$rotation)[1:4])
+    # separates Calc from Arag
+    
+    #plot(PCA$sdev)
+    #round(PCA$sdev, 2)
+    
+    PCs <- max(which(unlist(summary(PCA)[1])>trunc.SDs))    
+    # find the number of PCs to retain using the PC truncation 
+    # rule of eigenvector stdev > the truncation threshold
+    X <- as.data.frame(predict(PCA,A.prime))   
+    # project the analog pool onto the PCs
+    head(X)
+    
+    Yj <- as.data.frame(predict(PCA,Bj.prime)) 
+    # project the projected future conditions onto the PCs
+    
+    Zj <- as.data.frame(predict(PCA,Cj.prime)) 
+    # project the reference ICV onto the PCs
+    
+    
+    #plot(X[,1], X[,2]) # analog
+    #points(Zj[,1], Zj[,2], pch=19, col=rgb(1,0,0, 0.5)) # reference ICV
+    #points(Yj[,1], Yj[,2], pch=19, col=rgb(0,1,0)) # future conditions
+    
+    
+    ## Step 3a: express PC scores as standardized anomalies of reference interannual variability 
+    Zj.sd <- apply(Zj,2,sd, na.rm=T)     
+    #standard deviation of 1951-1990 interannual variability in each principal component, ignoring missing years
+    #Zj.sd
+    X.prime <- sweep(X,MARGIN=2,Zj.sd,`/`) 
+    #standardize the analog pool  
+    #head(X.prime)
+    Yj.prime <- sweep(Yj,MARGIN=2,Zj.sd,`/`) 
+    #standardize the projected conditions   
+    #Yj.prime
+    ## Step 3b: find the sigma dissimilarity of each projected condition with 
+    # its best analog (Euclidean nearest neighbour) in the observed analog pool.
+    X.prime <- X.prime[complete.cases(X.prime),]
+    nnd <- get.knnx(data=X.prime[,1:PCs],
+                    query=Yj.prime[,1:PCs],
+                    k=1,algorithm="brute")
+    NN.dist <- as.vector(nnd[[2]]) 
+    # Euclidean nearest neighbour distance in the z-standardized PCs of 
+    # interannual climatic variability, i.e. the Mahalanobian nearest neighbour. 
+    NN.chi <- pchi(NN.dist,PCs) # percentile of the nearest neighbour 
+    # distance on the chi distribution with degrees of freedom 
+    # equaling the dimensionality of the distance measurement (PCs)
+    if(NN.chi>=1){NN.chi=1-1e-16}
+      # sometimes with rounding error the NN.chi is greater than 1
+      # if NN.chi equals 1 than NN.sigma is infinite
+      # this slight transformation gives the largest possible value of NN.sigma
+    NN.sigma <- qchi(NN.chi,1) 
+    # values of the chi percentiles on a standard half-normal distribution (chi distribution with one degree of freedom)
+  
+    NN.station <- A$No[as.vector(nnd[[1]])]
+    
+    return(data.frame(NN.sigma, NN.station, NN.Mdist=NN.dist))
 }
 
 
