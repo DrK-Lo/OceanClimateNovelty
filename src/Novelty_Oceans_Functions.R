@@ -105,22 +105,23 @@ calculate_normals <- function(dat1){
 #initiate the data frame to store the projected sigma dissimilarity of best analogs for each grid cell. 
 
 loop_sigma_D <- function(A, B, C, append=""){
+  if(!identical(A$No, B$No)){print("Error"); break}
   NN.sigma <- data.frame(No=A$No,NN.sigma=NA, NN.station=NA, NN.Mdist=NA)
   
   for(j in 1:nrow(NN.sigma)){ 
     NN.sigma[j,2:4] <- calc_sigma_D(A, B, C, NN.sigma$No[j])
-    if(j%%10==0){print(c(j, "of", nrow(NN.sigma)))}
+    if(j%%100==0){print(c(j, NN.sigma$No[j],nrow(NN.sigma)))}
   }
-  names(NN.sigma)[2:4] <- paste0(names(NN.sigma_today_2100_4.5)[2:4],append)
+  names(NN.sigma)[2:4] <- paste0(names(NN.sigma)[2:4],append)
   return(NN.sigma)
 }
 
   
 calc_sigma_D <- function(A, B, C, whichStation){
-  # A is past climate
-  # B is future climate
-  # C is the data frame used to calculate the ICV
-  
+  # A is past climate, the base that a station from the future (B) is compared to
+  # B is future climate, will be subset to a particular station for analysis
+  # C is the data frame used to calculate the ICV, will also be subset to a particular station for analysis
+  if(!identical(A$No, B$No)){print("Error"); break}
   if(!identical(dim(A), dim(B))){print("Error A and B different dimensions")}
   if(ncol(A) != ncol(C)){print("Error A and C different number of columns")}
   

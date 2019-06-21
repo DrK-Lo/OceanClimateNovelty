@@ -92,6 +92,10 @@ unique(dat4.5$Year)
 
 #--------------------------------  
 ### 1800 analog to today ####
+# What are today's novel climates compared to 1800?
+# Novel climates are identified by comparing the 
+# future climate realization (B) for each gridpoint 
+# to the past (A) climate realizations (Williams)
 #--------------------------------
   length(norm_1800$No)
   length(norm_2000$No)
@@ -115,9 +119,7 @@ unique(dat4.5$Year)
   C <- data.frame(dat_2000[,c(1, whichcols)], dat_2000[,c( whichcols)])
   head(C)
   
-  NN.sigma_1800_today <- loop_sigma_D(A, B, C)
-  dim(A)
-  dim(B)
+  NN.sigma_1800_today <- loop_sigma_D(A, B, C, "_1800_today")
   head(NN.sigma_1800_today)
   
   final_dat <- full_join(NN.sigma_1800_today, stationInfo, by="No")
@@ -129,15 +131,108 @@ unique(dat4.5$Year)
   
   #NN.sigma_1800_today[which(is.infinite(NN.sigma_1800_today))] <- NA
  
-  head(final_dat)
   identical(nrow(final_dat), nrow(stationInfo)) 
     # should be true, same number as stations as stationInfo
-  dim(B)
   
   # Visualize
   world <- map_data("world2")
   Plot_nonInt(final_dat$lat, final_dat$long, 
               final_dat$NN.sigma_1800_today, world, "sigma dis.")
+  
+  # The NN.sigma_1800_today represents the novelty of today's
+    # climate compared to 1800
+  # NN.dist_1800_today represents the Mahalanobis distance from the climate
+    # in today to it's nearest neighbor in all 1800 data
+  # No--> NN.station_1800_today represents the station that was queried 2000 (B) 
+      # and it's nearest data in the global reference NN.station_1800_today (1800, A)
+  
+#--------------------------------  
+### Today analog to 1800 ####
+# What are today's disappearing climates compared to 1800?
+# disappearing climates are identified by comparing
+# each past gridpoint (A) to all future climate realizations (B)
+#--------------------------------
+  calc_sigma_D(A, B, C, 1)
+  calc_sigma_D(B, A, C, 1)
+
+  B <- norm_1800[complete.cases(norm_1800),]
+  A <- norm_2000[which(norm_2000$No %in% B$No),]
+  identical(A$No, B$No) # should be true
+  identical(sort(A$No), A$No) # should be true
+  NN.sigma_today_1800 <- loop_sigma_D(A, B, C, "_today_1800")
+  
+  head(NN.sigma_today_1800)
+  
+  final_dat2 <- full_join(final_dat, NN.sigma_today_1800)
+  head(final_dat2)
+  dim(final_dat2)
+  Plot_nonInt(final_dat2$lat, final_dat2$long, 
+              final_dat2$NN.sigma_today_1800, world, "sigma dis.")
+  
+  ggplot(final_dat2) + geom_point(aes(x=NN.sigma_1800_today, 
+                                      y=NN.sigma_today_1800,
+                                      color=lat), alpha=0.5) +
+    scale_color_gradient2(low="red", high="blue", mid="grey") +
+    theme_classic() + xlab("Novel climates today from 1800") +
+    ylab("Disappearing 1800 climates")
+  
+  # The NN.sigma_1800_disappear represents the novelty of 1800
+    # compared to today (e.g disappearing climates)
+  # NN.dist_1800_disappear represents the Mahalanobis distance from the climate
+  # in 1800 to it's nearest neighbor in all of today's data
+  # No--> NN.station_1800_disappear represents the the station that was queried 1800 (B) 
+  # and it's nearest data in the global reference NN.station_1800_disappear (2000, A)
+  
+  # Add the info for lat/long of nearest neighbors
+  stationInfo2 <- stationInfo
+  names(stationInfo2) <- paste0(names(stationInfo2),"_1800_today")
+  head(stationInfo2)
+  dim(stationInfo)
+  names(stationInfo2)[1] <-"NN.station_1800_today"
+  final_dat3 <- left_join(final_dat2, stationInfo2)
+  dim(final_dat3)
+  head(final_dat3)
+  tail(final_dat3)
+  
+  
+  stationInfo3 <- stationInfo
+  names(stationInfo3) <- paste0(names(stationInfo3),"_today_1800")
+  names(stationInfo3)[1] <- "NN.station_today_1800"
+  final_dat4 <- left_join(final_dat3, stationInfo3)
+  dim(final_dat4)
+  head(final_dat4)
+  
+  # cond <- which(final_dat4$NN.sigma_1800_today>5 |  final_dat4$NN.sigma_1800_disappear>5)
+  # length(cond)
+  # final_dat4[cond,]
+  
+  ggplot(final_dat4) + geom_point(aes(y=lat, 
+                                      x=lat_1800_today,
+                                      color=NN.sigma_1800_today), alpha=0.2) +
+    scale_color_gradient2(low="red", high="blue", mid="grey") +
+    theme_classic() + ylab("Latitude in 2000") +
+    xlab("Latitude of nearest neighbor in 1800") + geom_abline(intercept=0,slope=1) +
+    geom_abline(intercept=0,slope=-1)
+  # This plot makes more sense in the way we typically think about it.
+  # If we consider a location in 2000, where was the climate it came from in 1800?
+  
+  
+  
+  # ggplot(final_dat4) + geom_point(aes(x=lat_1800_disappear,
+  #                                     y=lat,
+  #                                     color=NN.sigma_1800_disappear), alpha=0.2) +
+  #   scale_color_gradient2(low="red", high="blue", mid="grey") +
+  #   theme_classic() + ylab("Latitude in 1800") +
+  #   xlab("Latitude of nearest neighbor in 2000") + geom_abline(intercept=0,slope=1) +
+  #   geom_abline(intercept=0,slope=-1)
+  # this is weird
+  
+  #n <- final_dat4 %>% filter(lat_1800_disappear > 0 & lat_1800_disappear < 10)
+  #Plot_nonInt(n$lat_1800_disappear, n$long_1800_disappear, 
+  #            n$NN.sigma_1800_disappear, world, "sigma dis.")
+  hist(final_dat4$lat_1800_disappear, breaks=seq(-90,90, by=1))
+  hist(final_dat4$lat_1800_today, breaks=seq(-90,90, by=1))
+  hist(final_dat4$lat, breaks=seq(-90,90, by=1))
   
 #--------------------------------  
 ### Today analog to 2100 RCP 8.5 ####
@@ -160,21 +255,32 @@ unique(dat4.5$Year)
   identical(A1$No, sort(A1$No)) # should also be true
 
   # C is the same defined above
-  NN.sigma_today_2100_8.5 <- loop_sigma_D(A1, B1, C)
-  names(NN.sigma_today_2100_8.5)[2:4] <- paste0(names(NN.sigma_today_2100_8.5)[2:4],"_today_2100_8.5")
+  NN.sigma_today_2100_8.5 <- loop_sigma_D(A1, B1, C, "_today_2100_8.5")
   
   which(is.infinite(NN.sigma_today_2100_8.5$NN.sigma_today_2100_8.5))
   which(is.na(NN.sigma_today_2100_8.5$NN.sigma_today_2100_8.5))
   
-  final_dat2 <- full_join(NN.sigma_today_2100_8.5, final_dat, by="No")
-  head(final_dat2)
+  final_dat5 <- full_join(NN.sigma_today_2100_8.5, final_dat4, by="No")
+  head(final_dat5)
   
-  dim(final_dat2)
-  dim(stationInfo)
+  dim(final_dat5)
+  stationInfo5 <- stationInfo
+  names(stationInfo5) <- paste0(names(stationInfo),"_today_2100_8.5")
+  names(stationInfo5)[1] <- "NN.station_today_2100_8.5"
+  head(stationInfo5)
+  final_dat6 <- left_join(final_dat5, stationInfo5)
+  dim(final_dat6)
+  head(final_dat6)
   
   # Visualize
-  Plot_nonInt(final_dat2$lat, final_dat2$long, 
-              final_dat2$NN.sigma_today_2100_8.5, world, "sigma dis.")
+  Plot_nonInt(final_dat6$lat, final_dat6$long, 
+              final_dat6$NN.sigma_today_2100_8.5, world, "sigma dis.")
+  
+#--------------------------------  
+### 2100 RCP 8.5 to today, what are today's climates that ####
+### will disappear in 2100 RCP 8.5?
+#--------------------------------
+  NN.sigma_2100_8.5_today <- loop_sigma_D( B1, A1, C, "_2100_8.5_today")
   
   
 #--------------------------------  
