@@ -281,10 +281,21 @@ unique(dat4.5$Year)
 ### will disappear in 2100 RCP 8.5?
 #--------------------------------
   NN.sigma_2100_8.5_today <- loop_sigma_D( B1, A1, C, "_2100_8.5_today")
+  final_dat7 <- full_join(NN.sigma_2100_8.5_today, final_dat6, by="No")
+  head(final_dat7)
+  Plot_nonInt(final_dat7$lat, final_dat7$long, 
+              final_dat7$NN.sigma_2100_8.5_today, world, "sigma dis.")
   
+  stationInfo7 <- stationInfo
+  names(stationInfo7) <- paste0(names(stationInfo),"_2100_8.5_today")
+  names(stationInfo7)[1] <- "NN.station_2100_8.5_today"
+  head(stationInfo7)
+  final_dat8 <- left_join(final_dat7, stationInfo7)
+  dim(final_dat8)
+  head(final_dat8)
   
 #--------------------------------  
-### Today analog to 2100 RCP 4.5 ####
+### 2100 RCP 4.5 against today ####
 #--------------------------------
   identical(norm_2000$No, norm_2100_4.5$No)
   
@@ -301,37 +312,65 @@ unique(dat4.5$Year)
   identical(A1$No, sort(A1$No)) # should also be true
   
   # C is the same defined above
-  NN.sigma_today_2100_4.5 <- loop_sigma_D(A1, B2, C)
+  NN.sigma_today_2100_4.5 <- loop_sigma_D(A1, B2, C, "_today_2100_4.5")
 
   which(is.infinite(NN.sigma_today_2100_4.5$NN.sigma_today_2100_4.5))
   which(is.na(NN.sigma_today_2100_4.5$NN.sigma_today_2100_4.5))
   
   
-  final_dat3 <- full_join(NN.sigma_today_2100_4.5, final_dat2, by="No")
-  head(final_dat3)
-  
-  dim(final_dat3)
-  dim(stationInfo)
-  
-  
-  cond <- which(!complete.cases(final_dat3))
-  length(cond)
-  final_dat3[cond,]
-  
-  # Visualize
-  Plot_nonInt(final_dat3$lat, final_dat3$long, 
-              final_dat3$NN.sigma_today_2100_4.5, world, "sigma dis.")
-  
-  
-### Write to file ####
-write.csv(final_dat2, "results/SigmaD.csv", row.names = FALSE)
+  final_dat9 <- full_join(NN.sigma_today_2100_4.5, final_dat8, by="No")
+  head(final_dat9)
   
 
-# Figure out NAs and NANs ###
-  stations 671 NA
-  station 773 NaN
+  # Visualize
+  Plot_nonInt(final_dat9$lat, final_dat9$long, 
+              final_dat9$NN.sigma_today_2100_4.5, world, "sigma dis.")
   
   
+  stationInfo9 <- stationInfo
+  names(stationInfo9) <- paste0(names(stationInfo),"_today_2100_4.5")
+  names(stationInfo9)[1] <- "NN.station_today_2100_4.5"
+  head(stationInfo9)
+  final_dat10 <- left_join(final_dat9, stationInfo9)
+  dim(final_dat10)
+  head(final_dat10)
+  
+#--------------------------------  
+### today against 2100 RCP 4.5 (disappearing climate) ####
+#--------------------------------
+  NN.sigma_2100_4.5_today <- loop_sigma_D(B2, A1, C, "_2100_4.5_today")
+  which(is.infinite(NN.sigma_2100_4.5_today$NN.sigma_2100_4.5_today))
+  which(is.na(NN.sigma_2100_4.5_today$NN.sigma_2100_4.5_today))
+  
+  
+  final_dat11 <- full_join(NN.sigma_2100_4.5_today, final_dat10, by="No")
+  head(final_dat11)
+  
+  # Visualize
+  Plot_nonInt(final_dat11$lat, final_dat11$long, 
+              final_dat11$NN.sigma_2100_4.5_today, world, "sigma dis.")
+  
+  stationInfo11 <- stationInfo
+  names(stationInfo11) <- paste0(names(stationInfo),"_2100_4.5_today")
+  names(stationInfo11)[1] <- "NN.station_2100_4.5_today"
+  head(stationInfo11)
+  final_dat12 <- left_join(final_dat11, stationInfo11)
+  dim(final_dat12)
+  head(final_dat12)
+    
+  sum(!complete.cases(final_dat12))
+### Write to file ####
+write.csv(final_dat12, "results/SigmaD.csv", row.names = FALSE)
+  
+plot(final_dat12$lat_today_2100_8.5, final_dat12$lat) #If A is today and B is future, 
+#  where station No's climate in the future will come from today (or the closest similar climate today).
+# Latitude of the station today (x-axis) where the latitude of the station in the future (y-axis) will come from
+
+
+plot(final_dat12$lat, final_dat12$lat_2100_8.5_today) # If A is future and B is today, this 
+# represents where station "No" will be found in the future (or the closest similar climate).
+# Latitude of the station today (x-axis) and where it will be in the future (y-axis)
+
 
   
   

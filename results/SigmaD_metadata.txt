@@ -1,0 +1,47 @@
+# Metadata for the file SigmaD.csv
+# This file contains comparisons for several different climate scenarios.
+# The method is based on code from Mahoney et al 2017
+
+# Each column is a comparison of a location to a baseline, for example NN.stat_A_B. "A" is the baseline and "B" is subset to the station number for the query against the baseline.
+
+# For the station number from climate scenario B, NN represents the "nearest neighbor" in A 
+
+# NN.sigma_A_B represents the sigma dissimilarity from B 
+to its nearest neighbor in A
+
+# NN.station_A_B represents the station from B to its nearest neighbor station in A
+
+# NN.Mdist_A_B represents the Mahalanobis distance from B to its nearest neighbor in A
+
+# Examples
+# NN.sigma_A_B , sigma_D from station "No" in ____B____ to its nearest neighbor in the ____A____ baseline (If B is current and A is future, larger values represents how much the climate at station "No" will be disappearing in the future. If A is current and B is future, this represents how much the climate at station "No" will be novel in the future.)
+
+# NN.station_A_B, the station in ___A___ that is the nearest neighbor to station "No". (If A is today and B is future, NN.station represents where station No's climate in the future will come from today (or the closest similar climate today). If A is future and B is today, this represents where station "No" will be found in the future (or the closest similar climate).)
+
+# NN.Mdist_A_B, M_d from station "No" in ___B_____ to its nearest neighbor in the ____A____ baseline (If B is current and A is future, larger values represents how much the climate at station "No" will be disappearing in the future. If A is current and B is future, this represents how much the climate at station "No" will be novel in the future.)
+
+# long_A_B, the longitude of the station in __A__ that is the nearest neighbor to station "No"
+
+# lat_A_B, the latitude of the station in __A__ that is the nearest neighbor to station "No" 
+
+# If this is confusing to you, don't worry you're not alone... 
+
+
+No, Station number (corresponding to B)
+lat, Latitude of No
+long, Longitude of No
+
+# Below, I describe columns for 2100_4.5, but not for 2100_8.5 because they are the same thing
+
+NN.sigma_2100_4.5_today, sigma_D from station "No" in ____today____ to its nearest neighbor in the ____2100-4.5____ baseline (If B is current and A is future, larger values represents how much the climate at station "No" will be disappearing in the future.)
+NN.station_2100_4.5_today, the station in ___2100-4.5___ that is the nearest neighbor to station "No" (If A is future and B is today, this represents where station "No" will be found in the future (or the closest similar climate).
+NN.Mdist_2100_4.5_today, M_d from station "No" in ___today_____ to its nearest neighbor in the ____2100-4.5____ baseline (If B is current and A is future, larger values represents how much the climate at station "No" will be disappearing in the future.)
+long_2100_4.5_today, the longitude of the station in __2100-4.5__ that is the nearest neighbor to station "No"
+lat_2100_4.5_today, the latitude of the station in __2100-4.5__ that is the nearest neighbor to station "No" 
+
+
+# NN.sigma_today_2100_4.5 , sigma_D from station "No" in ____2100-4.5____ to its nearest neighbor in the ____today____ baseline (If A is current and B is future, this represents how much the climate at station "No" will be novel in the future.)
+# NN.station_today_2100_4.5, the station in ___today___ that is the nearest neighbor to station "No" 
+# NN.Mdist_today_2100_4.5, M_d from station "No" in ___2100-4.5_____ to its nearest neighbor in the ____today____ baseline (If B is current and A is future, larger values represents how much the climate at station "No" will be disappearing in the future. If A is current and B is future, this represents how much the climate at station "No" will be novel in the future.)
+# long_today_2100_4.5, the longitude of the station in __today__ that is the nearest neighbor to station "No"
+# lat_today_2100_4.5, the latitude of the station in __today__ that is the nearest neighbor to station "No" 
