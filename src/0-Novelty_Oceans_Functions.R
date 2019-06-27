@@ -14,7 +14,7 @@
 packages_needed <- c("raster", "FNN", "RColorBrewer", "colorRamps", "adehabitatLT",
                      "data.table", "tidyverse", "fields", "ggplot2", "hexbin",
                      "rgdal", "tmap", "gstat", "sp", "maptools", "sf", "fasterize",
-                     "fansi", "raster", "tmap", "gstat"
+                     "fansi", "raster", "tmap", "gstat", "ContourFunctions","ash"
                      )
 
 for (i in 1:length(packages_needed)){

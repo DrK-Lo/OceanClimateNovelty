@@ -7,13 +7,13 @@
 ## written by Colin Mahony
 ## Supp Material of "A closer look at novel climates: new methods and insights at continental to landscape scales"
 
-# Current Plans
+# What this code does
 # Compare 1800 analog (A) to today surface (B), with today's surface variability (C)
 # Compare today surface analog (A) to 2100-RCP8.5 (B), with today's surface variability (C)
 # Compare today surface analog (A) to 2100-RCP4.5 (B), with today's surface variability (C)
 
-# Future Plans
-# Compare today all depths analog (A) to 2100 (B), with today's surface variability (C)
+# This code also compares the converse (e.g. the current climate as B to the future climate as A)
+# to assess disappearing climates
 
 ##################################
 #### System setup ####
