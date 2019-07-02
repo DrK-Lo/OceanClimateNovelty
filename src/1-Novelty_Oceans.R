@@ -379,32 +379,3 @@ plot(final_dat12$lat, final_dat12$lat_2100_8.5_today) # If A is future and B is 
   
   
   
-### Subset
-head(dat_2000)
-cond_indop <- function(x){x$long<200 & x$long>150 & 
-  abs(x$lat) < 5}
-cond_antar <- function(x){x$long < 250 & x$long > 150 & x$lat < -60}
-
-head(norm_2000)
-head(stationInfo)
-
-A2 <- merge(norm_2000, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
-B2 <- merge(norm_2100, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
-
-
-## Plot indopacific
-whichindop_2000 <- which(cond_indop(A2))
-whichindop_2100 <-  which(cond_indop(B2))
-plot(A$SST_sum, A$Arag_sum, xlim=c(-5, 35), ylim=c(-0.5,6))
-  points(A$SST_sum[whichindop_2000], A$Arag_sum[whichindop_2000], col=adjustcolor("green",0.5))
-  points(B$SST_sum[whichindop_2100], B$Arag_sum[whichindop_2100], pch=19, col=adjustcolor("darkgreen", 0.5))
-  ## Plot antartica
-  whichantar_2000 <- which(cond_antar(A2))
-  whichantar_2100 <-  which(cond_antar(B2))
-  points(A$SST_sum[whichantar_2000], A$Arag_sum[whichantar_2000], xlim=c(-5, 10), ylim=c(-0.5, 3),  col=adjustcolor("lightblue", 0.5))
-  points(B$SST_sum[whichantar_2100], B$Arag_sum[whichantar_2100], pch=19, col=adjustcolor("blue", 0.5))
-
-# where is future antartic going to look like?
-fa <- A2[which(A$SST_sum<10 &A$Arag_sum<1),] 
-Plot_nonInt(fa$lat, fa$long, 
-            1, world, "sigma dis.")

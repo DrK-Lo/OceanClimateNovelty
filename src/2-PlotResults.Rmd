@@ -61,26 +61,32 @@ y <- seq(ab[2,1], ab[2,2], length.out = nbin[2])
   z_2100_4.5 <- y2100_4.5$nc
   z_2100_4.5[z_2100_4.5>0] <- 1 # convert to presence/absence   
 
-par(mar=c(4,4,0.5,0.5))  
+### Make Temp vs. Omega plot ####  
+pdf("../results/TempVsOmega.pdf", width=8, height=4)  
+par(mar=c(4,4,0.5,0.5), mfrow=c(1,2), oma=c(0,0,0.5,0.5))  
 # 1800 to 2000  
-  image(x, y, z_1800, col=c("white", "dodgerblue4"),
+  image(x, y, z_1800, col=c("white", adjustcolor("dodgerblue4",0.8)),
         xlab="Temperature (C)",
         ylab="Aragonite Saturatation State",
-        bty="l"
+        bty="l",
+        xlim=c(-5, 60)
         )
-  image(x, y, z_2000, add=TRUE, col=c(rgb(0,0,0,0), adjustcolor("goldenrod", 0.7)))
+  image(x, y, z_2000, add=TRUE, col=c(rgb(0,0,0,0), adjustcolor("goldenrod", 0.8)))
   text(20, 9.5, "1800 disappearing in 2000", col="dodgerblue4")  
-  lines(c(20,25), c(9, 5.4), lwd=3, col=rgb(0,0,0,0.8))
-  lines(c(20,5), c(9, 4), lwd=3, col=rgb(0,0,0,0.8))
-  text(22, 0.5, "Novel in 2000", col="goldenrod", adj=0)  
-  lines(c(25,30), c(1, 3.7), lwd=3, col=rgb(0,0,0,0.8))
-  lines(c(25,17), c(1, 2.1), lwd=3, col=rgb(0,0,0,0.8))
+  lines(c(20,25), c(9, 5.4), lwd=3, col="dodgerblue4")
+  lines(c(20,6), c(9, 4.1), lwd=3, col="dodgerblue4")
+   abline(1,0, lty=2, col=rgb(0,0,0,0.7))
+  text(22, 0.5, "Novel in 2000", col="goldenrod4", adj=0)  
+  lines(c(25,30), c(1, 3.7), lwd=3, col="goldenrod4")
+  lines(c(25,17), c(1, 2.1), lwd=3, col="goldenrod4")
+  legend(40, 12, c("1800", "2000"), fill=c(adjustcolor("dodgerblue4", 0.8), 
+      adjustcolor("goldenrod", 0.8)), bty="n", adj=0)
   
     
 # 2000 to 2100_8.5  
   image(x, y, z_2000, col=c(rgb(0,0,0,0), adjustcolor("goldenrod", 0.8)),
         xlab="Temperature (C)",
-        ylab="Aragonite Saturatation State",
+        ylab="",
         bty="l",
         xlim=c(-5, 60)
         )
@@ -93,16 +99,58 @@ par(mar=c(4,4,0.5,0.5))
   lines(c(35,32), c(2, 2.5), lwd=3, col="darkmagenta")
   lines(c(35,24), c(2, 1.8), lwd=3, col="darkmagenta")
   legend(40, 12, c("2000", "2100"), fill=c(adjustcolor("goldenrod", 0.8), 
-         adjustcolor("darkmagenta", 0.5)), bty="n")
-  
+         adjustcolor("darkmagenta", 0.5)), bty="n", adj=0)
+dev.off()  
 
 # 2000 to 2100_4.5  
-  image(x, y, z_2000, col=c(rgb(0,0,0,0), adjustcolor("goldenrod", 1)),
+par(mar=c(4,4,0.5,0.5), mfrow=c(1,1), oma=c(0,0,0.5,0.5))  
+  image(x, y, z_2000, col=c(rgb(0,0,0,0), adjustcolor("goldenrod", 0.8)),
         xlab="Temperature (C)",
         ylab="Aragonite Saturatation State",
-        bty="l"
+        bty="l",
+        xlim=c(-5, 60)
         )
   image(x, y, z_2100_4.5, add=TRUE, col=c(rgb(0,0,0,0), adjustcolor("darkorange", 0.5)))
-  
+  legend(30, 12, c("2000", "2100\nRCP 4.5"), fill=c(adjustcolor("goldenrod", 0.8), 
+         adjustcolor("darkorange", 0.5)), bty="n", adj=0)
+```
+
+## Subset to specific places on map:
+
+Questions: 
+For the future Antartic, where is the climate going to come from today?
+
+
+```{r}
+
+### Subset
+head(dat_Nov)
+cond_indop <- function(x){x$long<200 & x$long>150 & 
+  abs(x$lat) < 5}
+cond_antar <- function(x){x$long < 250 & x$long > 150 & x$lat < -60}
+
+head(norm_2000)
+head(stationInfo)
+
+A2 <- merge(norm_2000, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
+B2 <- merge(norm_2100, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
+
+
+## Plot indopacific
+whichindop_2000 <- which(cond_indop(A2))
+whichindop_2100 <-  which(cond_indop(B2))
+plot(A$SST_sum, A$Arag_sum, xlim=c(-5, 35), ylim=c(-0.5,6))
+  points(A$SST_sum[whichindop_2000], A$Arag_sum[whichindop_2000], col=adjustcolor("green",0.5))
+  points(B$SST_sum[whichindop_2100], B$Arag_sum[whichindop_2100], pch=19, col=adjustcolor("darkgreen", 0.5))
+  ## Plot antartica
+  whichantar_2000 <- which(cond_antar(A2))
+  whichantar_2100 <-  which(cond_antar(B2))
+  points(A$SST_sum[whichantar_2000], A$Arag_sum[whichantar_2000], xlim=c(-5, 10), ylim=c(-0.5, 3),  col=adjustcolor("lightblue", 0.5))
+  points(B$SST_sum[whichantar_2100], B$Arag_sum[whichantar_2100], pch=19, col=adjustcolor("blue", 0.5))
+
+# where is future antartic going to look like?
+fa <- A2[which(A$SST_sum<10 &A$Arag_sum<1),] 
+Plot_nonInt(fa$lat, fa$long, 
+            1, world, "sigma dis.")
 
 ```

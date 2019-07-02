@@ -12,7 +12,46 @@ source("0-Novelty_Oceans_Functions.R")
 
 
 setwd("~/Desktop/Repos/OceanClimateNovelty/src")
-```{r cars}
-dat <- fread("../results/SigmaD.csv")
-head(dat)
+
+```{r load data}
+dat_Nov <- fread("../results/SigmaD.csv")
+dat4.5 <- fread("../data/large_files/T_Ar_Ca_pH_RCP45.txt", sep = ",")
+dat8.5 <- fread("../data/large_files/T_Ar_Ca_pH_RCP85.txt", sep = ",")
+```
+
+In the column names, the first one is the baseline (A) and the second one corresponds
+to the station (B). 
+
+When the future (B) is queried against the past baseline (A), it represents novel climates in the future. 
+
+When the past (B) is queried against the future baseline (A), it represents disappearing climates in the past.
+
+NN.sigma represents Mahoney's $\sigma_D$
+
+However is some cases our Mahalanobis distances were so extreme they gave the 
+maximum possible value of $\sigma_D$. So I will compare `Mdist` to see if they
+represent the data better.
+
+* Upper left: Disappearing climates from 1800 in today's ocean (NN.sigma_today_1800)
+* Upper right: Novel climates today from 1800 (NN.sigma_1800_today)
+* Middle left: Disappearing climates from today under RCP 4.5 at 2100 (NN.sigma_2100_4.5_today)
+* Middle right: Novel climates for RCP 4.5 from today (NN.sigma_today_2100_4.5)
+* Lower left: Disappearing climates from today under RCP 8.5 at 2100 (NN.sigma_2100_8.5_today)
+* Lower right: Novel climates for RCP 8.5 from today (NN.sigma_today_2100_8.5)
+
+```{r}
+Plot_interp(dat_Nov, dat_Nov$NN.sigma_today_1800, "Yo") #Disappearing from 1800
+Plot_interp(dat_Nov, dat_Nov$NN.sigma_1800_today, "Yo") #Novel today from 1800
+
+Plot_interp(dat_Nov, dat_Nov$NN.sigma_2100_4.5_today, "Yo") #Disappearing from today
+Plot_interp(dat_Nov, dat_Nov$NN.sigma_today_2100_4.5, "Yo") #Novel 2100 4.5
+
+Plot_interp(dat_Nov, dat_Nov$NN.sigma_2100_8.5_today, "Yo") #Disappearing from today
+Plot_interp(dat_Nov, dat_Nov$NN.sigma_today_2100_8.5, "Yo") #Novel 2100 8.5
+
+hist(dat_Nov$NN.sigma_today_2100_8.5)
+hist(dat_Nov$NN.sigma_2100_8.5_today)
+
+image(dat_Nov$long, dat_Nov$lat, dat_Nov$)
+
 ```
