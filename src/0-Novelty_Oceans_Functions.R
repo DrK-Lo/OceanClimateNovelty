@@ -14,7 +14,8 @@
 packages_needed <- c("raster", "FNN", "RColorBrewer", "colorRamps", "adehabitatLT",
                      "data.table", "tidyverse", "fields", "ggplot2", "hexbin",
                      "rgdal", "tmap", "gstat", "sp", "maptools", "sf", "fasterize",
-                     "fansi", "raster", "tmap", "gstat", "ContourFunctions","ash"
+                     "fansi", "raster", "tmap", "gstat", "ContourFunctions","ash",
+                     "gridExtra"
                      )
 
 for (i in 1:length(packages_needed)){
@@ -283,7 +284,7 @@ gplot_data <- function(x, maxpixels = 100000)  {
   dat
 }
 
-### Function for interpolated plotting
+### Function for interpolated plotting ####
 Plot_interp<-function(data,column, B, title){ #Data is expected to be data.table format, column should be in the format 'data$column', title is a character string for the figure legend.
   FD12<-data[,c("long","lat")]
   FD12$sigma<-column
@@ -298,7 +299,7 @@ Plot_interp<-function(data,column, B, title){ #Data is expected to be data.table
   MakeRast<-function(data){
     while(boolFALSE==F){
       tryCatch({
-        gr <- as.data.frame(spsample(data, 'regular', n  = 10000000))
+        gr <- as.data.frame(spsample(data, 'regular', n  = 1000000))#n  = 10000000))
         names(gr) <- c('X', 'Y')
         coordinates(gr) <- c('X', 'Y')
         gridded(gr) <- TRUE 
@@ -320,9 +321,59 @@ Plot_interp<-function(data,column, B, title){ #Data is expected to be data.table
   
   tm_shape(r) + 
     tm_raster(breaks = B, palette = 'plasma', # n = 10 may be better
-              title = title) + 
-    tm_legend(legend.outside = TRUE) +
+               legend.show=FALSE) + 
+    #tm_legend(legend.outside = TRUE) +
+    tm_layout(main.title=title, main.title.size=1,
+           #   outer.margins = c(0,0,0,0),
+          #    inner.margins = c(0,0,0,0),
+          #    between.margin = c(0,0,0,0)
+          ) + 
     tm_shape(World, projection="longlat") +
     tm_fill()
 }
 
+
+### Function for interpolated plotting only legend ####
+Plot_interp_legend <-function(data,column, B, title){ #Data is expected to be data.table format, column should be in the format 'data$column', title is a character string for the figure legend.
+  FD12<-data[,c("long","lat")]
+  FD12$sigma<-column
+  FD12<-FD12[!is.na(FD12$sigma),]
+  FD12[long>360,long:=long-360] #Correct format
+  #FD12$long<-FD12$long-180 # Convert to WGS 1984 bounds
+  FD12[long>180,long:=long-360]
+  FD12_SP <- SpatialPoints(FD12) # Spatial points df
+  proj4string(FD12_SP) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84")
+  
+  boolFALSE<-F
+  MakeRast<-function(data){
+    while(boolFALSE==F){
+      tryCatch({
+        gr <- as.data.frame(spsample(data, 'regular', n  = 10000))#DO NOT INCREASE n FOR LEGEND))
+        names(gr) <- c('X', 'Y')
+        coordinates(gr) <- c('X', 'Y')
+        gridded(gr) <- TRUE 
+        fullgrid(gr) <- TRUE
+        proj4string(gr) <- proj4string(data)
+        data.idw <- idw(sigma~1, data, newdata = gr, idp = 10)
+        return(raster(data.idw))
+        boolFalse<-T
+      },
+      error=function(e){
+      },finally={})
+    }
+  }
+  
+  r<-MakeRast(FD12_SP)
+  
+  data('World', package = 'tmap')
+  #get_projection(World)
+  
+  tm_shape(r) + 
+    tm_raster(breaks = B, palette = 'plasma', # n = 10 may be better
+    title=title) + 
+    tm_legend(legend.outside = FALSE, legend.position=c("left","center"),
+              legend.title.size=1, legend.text.size=1) +
+    tm_layout(title=title, legend.only=TRUE, main.title=title, main.title.size=1) + 
+    tm_shape(World, projection="longlat") +
+    tm_fill()
+}
