@@ -125,6 +125,7 @@ For the future Antartic, where is the climate going to come from today?
 
 ### Subset
 head(dat_Nov)
+x <- dat_Nov
 cond_indop <- function(x){x$long<200 & x$long>150 & 
   abs(x$lat) < 5}
 cond_antar <- function(x){x$long < 250 & x$long > 150 & x$lat < -60}
