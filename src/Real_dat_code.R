@@ -32,15 +32,39 @@ hist(hots$Years)
 summary(bats$Years)
 hist(bats$Years)
 
-
 hots_sd<-hots[hots$`press(dbar)`<10] %>% 
   group_by(Years) %>% 
-  summarise(sd(`temp(ITS-90)`,na.rm=T))
-colnames(hots_sd)<-c("Years","Temp_sd")
+  summarise(sd(`temp(ITS-90)`,na.rm=T),sd(ph,na.rm=T))
+colnames(hots_sd)<-c("Years","Temp_sd","pH_sd")
+
+ggplot(data=hots_sd)+
+  geom_point(aes(Years,Temp_sd))+
+  ylab("Surface Temperature (standard deviation)")+
+  ggtitle("HOTS")+
+  geom_hline(yintercept=mean(hots_sd$Temp_sd),col="red")
+
+ggplot(data=hots_sd)+
+  geom_point(aes(Years,pH_sd))+
+  ylab("pH (standard deviation)")+
+  ggtitle("HOTS")+
+  geom_hline(yintercept=mean(hots_sd$pH_sd, na.rm = T),col="red")
 
 bats_sd<-bats[bats$Depth < 10]  %>% 
   group_by(Years) %>% 
-  summarise(sd(Temp,na.rm=T))  
+  summarise(sd(Temp,na.rm=T),sd(ph,na.rm=T))  
 colnames(bats_sd)<-c("Years","Temp_sd")
         
-        
+ggplot(data=bats_sd)+
+  geom_point(aes(Years,Temp_sd))+
+  ylab("Surface Temperature (standard deviation)")+
+  ggtitle("BATS")+
+  geom_hline(yintercept=mean(bats_sd$Temp_sd, na.rm = T),col="red")
+
+ggplot()+
+  geom_point(data=bats_sd,aes(bats_sd$Years,bats_sd$Temp_sd),col="cyan")+
+  geom_point(data=hots_sd, aes(hots_sd$Years,hots_sd$Temp_sd),col="orange")+
+  xlab("Years")+
+  ylab("Surface Temperature (standard deviation)")+
+  geom_hline(yintercept=mean(bats_sd$Temp_sd, na.rm = T),col="blue")+
+  geom_hline(yintercept=mean(hots_sd$Temp_sd, na.rm = T),col="red")
+
