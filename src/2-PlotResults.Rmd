@@ -22,7 +22,9 @@ dat8.5 <- fread("../data/large_files/T_Ar_Ca_pH_RCP85.txt", sep = ",")
 ```
 
 # Plot distribution of temperature and omega_arag at 1800, 2000, and 2100
-```{r}
+```{r, eval=FALSE, echo=FALSE}
+
+# This code generates a plot with a hard-to-see pattern. 
 
 plot(dat8.5$SST[dat8.5$Year==1800], dat8.5$Arag[dat8.5$Year==1800], pch=19, col=adjustcolor("black", 0.5))
 
@@ -31,7 +33,7 @@ points(dat8.5$SST[dat8.5$Year==2000], dat8.5$Arag[dat8.5$Year==2000], pch=17, co
 points(dat8.5$SST[dat8.5$Year==2100], dat8.5$Arag[dat8.5$Year==2100], pch=22, col=adjustcolor("darkorange", 0.1), bg=adjustcolor("yellow", 0.2))
 ```
 
-The last plot results in a hard to see pattern. Subset to points with unique x,y values:
+Subset to points with unique x,y values:
 ```{r}
 summary(dat8.5$SST)
 summary(dat8.5$Arag)
