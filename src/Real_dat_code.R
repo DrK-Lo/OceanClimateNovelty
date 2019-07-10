@@ -28,11 +28,13 @@ hots$Years<-years
 bats$Years<-as.numeric(substr(bats$yyyymmdd,1,4))
 
 summary(hots$Years)
+summary(as.factor(hots$Years))
 hist(hots$Years)
 summary(bats$Years)
+summary(as.factor(bats$Years))
 hist(bats$Years)
 
-hots_sd<-hots[hots$`press(dbar)`<10] %>% 
+hots_sd<-hots[hots$`press(dbar)`<10 & hots$Years>1988] %>% 
   group_by(Years) %>% 
   summarise(sd(`temp(ITS-90)`,na.rm=T),sd(ph,na.rm=T))
 colnames(hots_sd)<-c("Years","Temp_sd","pH_sd")
@@ -49,9 +51,9 @@ ggplot(data=hots_sd)+
   ggtitle("HOTS")+
   geom_hline(yintercept=mean(hots_sd$pH_sd, na.rm = T),col="red")
 
-bats_sd<-bats[bats$Depth < 10]  %>% 
+bats_sd<-bats[bats$Depth < 10 & bats$Years>1988]  %>% 
   group_by(Years) %>% 
-  summarise(sd(Temp,na.rm=T),sd(ph,na.rm=T))  
+  summarise(sd(Temp,na.rm=T))  
 colnames(bats_sd)<-c("Years","Temp_sd")
         
 ggplot(data=bats_sd)+
