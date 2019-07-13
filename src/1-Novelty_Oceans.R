@@ -1,5 +1,5 @@
 ### KE Lotterhos
-### Oct 2018 - June 2019
+### Oct 2018 - July 2019
 ### Northeastern University
 ### Mod. Áki - Nov. 2018 - June 2019
 
@@ -22,19 +22,23 @@
   setwd("/Users/katie/Desktop/Repos/OceanClimateNovelty/") 
   #setwd("~/Desktop/PostDoc/OceanClimateNovelty/")
 
-  source("src/Novelty_Oceans_Functions.R")
+  source("src/0-Novelty_Oceans_Functions.R")
 
 ##################################
 #### Read in the input data ####
 ##################################
+dat1 <- fread("/Users/katie/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_1800_2000.txt", sep = ",")
+dat4.5 <- fread("/Users/katie/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_2070_2100_RCP45.txt", sep = ",")
+dat8.5 <- fread("/Users/katie/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_2070_2100_RCP85.txt", sep = ",")
 
-dat8.5 <- fread("data/large_files/T_Ar_Ca_pH_RCP85.txt", sep = ",")
-dat4.5 <- fread("data/large_files/T_Ar_Ca_pH_RCP45.txt", sep = ",")
-
+head(dat1)
 head(dat8.5)
 head(dat4.5)
+unique(dat1$Year)
 unique(dat8.5$Year)
 unique(dat4.5$Year)
+
+
 
 #boxplot(dat8.5$pH ~ dat8.5$Year)
 #boxplot(dat4.5$pH ~ dat4.5$Year)
@@ -46,16 +50,20 @@ unique(dat4.5$Year)
 #--------------------------------
   # for example, 1930 represents from 1/1/1925 to 12/31/1934.  
 
-  dat_1800 <- dat8.5 %>% filter(Year<1850)
+  dat_1800 <- dat1 %>% filter(Year<1850)
   dim(dat_1800)
-  dat_2000 <-   dat8.5 %>% filter(Year>1960 & Year<2010)
+  dat_2000 <-   dat1 %>% filter(Year>1960 & Year<2010)
   dim(dat_2000)  
-  dat_2100_8.5 <-   dat8.5 %>% filter(Year>2050)
+  dat_2100_8.5 <-   dat8.5 
   dim(dat_2100_8.5) 
-  dat_2100_4.5 <-   dat4.5 %>% filter(Year>2050)
+  dat_2100_4.5 <-   dat4.5 
   dim(dat_2100_4.5) 
 
-
+  sum(!complete.cases(dat_1800))
+  sum(!complete.cases(dat_2000))
+  sum(!complete.cases(dat_2100_4.5))
+  sum(!complete.cases(dat_2100_8.5))
+  hist(dat_1800$Month)
   # summer  
     # (if Lat > 0, months 6,7,8)
     # (if Lat < 0, months 12,1,2)
@@ -70,6 +78,7 @@ unique(dat4.5$Year)
   norm_2100_8.5 <- calculate_normals(dat_2100_8.5)
   norm_2100_4.5 <- calculate_normals(dat_2100_4.5)
 
+  head(norm_1800)
   dim(norm_1800)
   dim(norm_2000)
   dim(norm_2100_8.5)
@@ -97,8 +106,7 @@ unique(dat4.5$Year)
 # future climate realization (B) for each gridpoint 
 # to the past (A) climate realizations (Williams)
 #--------------------------------
-  length(norm_1800$No)
-  length(norm_2000$No)
+
   A <- norm_1800
   # 1800 climate normals
   head(A)
@@ -115,7 +123,7 @@ unique(dat4.5$Year)
   identical(A$No, B$No) # should be true
   
   head(dat_2000)  
-  (whichcols <- which(names(dat_2000) %in% c("SST", "Arag", "Calc", "pH")))
+  (whichcols <- which(names(dat_2000) %in% c("SST", "Arag", "pH")))
   C <- data.frame(dat_2000[,c(1, whichcols)], dat_2000[,c( whichcols)])
   head(C)
   
@@ -148,7 +156,7 @@ unique(dat4.5$Year)
   
 #--------------------------------  
 ### Today analog to 1800 ####
-# What are today's disappearing climates compared to 1800?
+# What are 1800 disappearing climates?
 # disappearing climates are identified by comparing
 # each past gridpoint (A) to all future climate realizations (B)
 #--------------------------------
@@ -295,7 +303,7 @@ unique(dat4.5$Year)
   head(final_dat8)
   
 #--------------------------------  
-### 2100 RCP 4.5 against today ####
+### 2100 RCP 4.5 against today (novelty) ####
 #--------------------------------
   identical(norm_2000$No, norm_2100_4.5$No)
   
@@ -359,8 +367,19 @@ unique(dat4.5$Year)
   head(final_dat12)
     
   sum(!complete.cases(final_dat12))
+
+  
+  
 ### Write to file ####
 write.csv(final_dat12, "results/SigmaD.csv", row.names = FALSE)
+  
+dat_Nov <- final_dat12
+for_liqing <- data.frame(No=dat_Nov$No, lat=dat_Nov$lat,long=dat_Nov$long,A=dat_Nov$NN.sigma_today_1800, B=dat_Nov$NN.sigma_1800_today, C=dat_Nov$NN.sigma_2100_4.5_today, D=dat_Nov$NN.sigma_today_2100_4.5, E=dat_Nov$NN.sigma_2100_8.5_today, F=dat_Nov$NN.sigma_today_2100_8.5)
+write.csv(for_liqing,  "../results/SigmaD_plot1.csv", row.names=FALSE)
+
+for_liqing_Md <- data.frame(No=dat_Nov$No, lat=dat_Nov$lat,long=dat_Nov$long,A=dat_Nov$NN.Mdist_today_1800, B=dat_Nov$NN.Mdist_1800_today, C=dat_Nov$NN.Mdist_2100_4.5_today, D=dat_Nov$NN.Mdist_today_2100_4.5, E=dat_Nov$NN.Mdist_2100_8.5_today, F=dat_Nov$NN.Mdist_today_2100_8.5)
+write.csv(for_liqing_Md,  "../results/SigmaD_plot2.csv", row.names=FALSE)
+  
   
 plot(final_dat12$lat_today_2100_8.5, final_dat12$lat) #If A is today and B is future, 
 #  where station No's climate in the future will come from today (or the closest similar climate today).

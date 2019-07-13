@@ -47,50 +47,35 @@ calculate_normals <- function(dat1){
   month2 <- c(12,1,2)
   
   ## Summer calculations
-  x_sum <- dat1 %>% filter((Lat < 0 & Month %in% month1)|
-                             (Lat > 0 & Month %in% month2))
+  x_sum <- dat1 %>% filter((Lat < 0 & Month %in% month2)|
+                             (Lat > 0 & Month %in% month1))
   SST_sum <- tapply(x_sum$SST,INDEX = x_sum$No,mean, rm.na=TRUE)
   #length(SST_sum)
   Arag_sum <- tapply(x_sum$Arag,INDEX = x_sum$No,mean, rm.na=TRUE)
   #length(Arag_sum)
-  Calc_sum <- tapply(x_sum$Calc,INDEX = x_sum$No,mean, rm.na=TRUE)
-  #length(Calc_sum)
   pH_sum <- tapply(x_sum$pH,INDEX = x_sum$No,mean, rm.na=TRUE)
   
   
-  # Do we need to delete this?
-    #Long <- aggregate(Lon~No, x_sum, paste, simplify = F) #Get Long
-    #Lon <- as.numeric(lapply(Long$Lon, `[[`, 1))
-    #Lati <- aggregate(Lat~No, x_sum, paste, simplify = F) #Get Lat
-    #Lat <- as.numeric(lapply(Lati$Lat, `[[`, 1))
-  
   # check that the column names are identical:
   if(!(identical(names(SST_sum), names(Arag_sum)) |
-       identical(names(Arag_sum), names(Calc_sum)) |
+     #  identical(names(Arag_sum), names(Calc_sum)) |
        identical(names(pH_sum), names(SST_sum)))
     ){break}
   
   # create summer data frame for each station
-  smr <- data.frame(No=as.integer(names(SST_sum)), SST_sum,Arag_sum,Calc_sum, pH_sum  )
+  smr <- data.frame(No=as.integer(names(SST_sum)), SST_sum,Arag_sum, pH_sum  )
   head(smr)
   
   ## Winter calculations    
-  x_win <- dat1 %>% filter((Lat >0 & Month %in% month1)|
-                             (Lat <0 & Month %in% month2))
+  x_win <- dat1 %>% filter((Lat > 0 & Month %in% month2)|
+                             (Lat <0 & Month %in% month1))
   SST_win <- tapply(x_win$SST,INDEX = x_win$No,mean, rm.na=TRUE)
   Arag_win <- tapply(x_win$Arag,INDEX = x_win$No,mean, rm.na=TRUE)
-  Calc_win <- tapply(x_win$Calc,INDEX = x_win$No,mean, rm.na=TRUE)
   pH_win <- tapply(x_win$pH,INDEX = x_win$No,mean, rm.na=TRUE)
 
-  wnt <- data.frame(No=as.integer(names(SST_win)), SST_win,Arag_win,Calc_win,pH_win  )
+  wnt <- data.frame(No=as.integer(names(SST_win)), SST_win,Arag_win, pH_win  )
   head(wnt)
-  
-  # Do we need to delete this?
-  #Long <- aggregate(Lon~No, x_win, paste, simplify=F) # Get Lon
-  #Lon <- as.numeric(lapply(Long$Lon, `[[`, 1))
-  #Lati <- aggregate(Lat~No, x_win, paste, simplify=F) # Get Lat
-  #Lat <- as.numeric(lapply(Lati$Lat, `[[`, 1))
-  
+
   # merge summer and winter data frames
   normals <- full_join(smr, wnt, by="No")
   #head(normals)
@@ -111,7 +96,7 @@ loop_sigma_D <- function(A, B, C, append=""){
   
   for(j in 1:nrow(NN.sigma)){ 
     NN.sigma[j,2:4] <- calc_sigma_D(A, B, C, NN.sigma$No[j])
-    if(j%%100==0){print(c(j, NN.sigma$No[j],nrow(NN.sigma)))}
+    if(j%%100==0){print(c(j, NN.sigma$No[j], nrow(NN.sigma)))}
   }
   names(NN.sigma)[2:4] <- paste0(names(NN.sigma)[2:4],append)
   return(NN.sigma)
