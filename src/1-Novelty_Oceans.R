@@ -374,27 +374,46 @@ unique(dat4.5$Year)
 write.csv(final_dat12, "results/SigmaD.csv", row.names = FALSE)
   
 dat_Nov <- final_dat12
-for_liqing <- data.frame(No=dat_Nov$No, lat=dat_Nov$lat,long=dat_Nov$long,A=dat_Nov$NN.sigma_today_1800, B=dat_Nov$NN.sigma_1800_today, C=dat_Nov$NN.sigma_2100_4.5_today, D=dat_Nov$NN.sigma_today_2100_4.5, E=dat_Nov$NN.sigma_2100_8.5_today, F=dat_Nov$NN.sigma_today_2100_8.5)
+for_liqing <- data.frame(No=dat_Nov$No, lat=dat_Nov$lat,long=dat_Nov$long,
+                         A=dat_Nov$NN.sigma_today_1800, 
+                         B=dat_Nov$NN.sigma_1800_today, 
+                         C=dat_Nov$NN.sigma_2100_4.5_today, 
+                         D=dat_Nov$NN.sigma_today_2100_4.5, 
+                         E=dat_Nov$NN.sigma_2100_8.5_today, 
+                         F=dat_Nov$NN.sigma_today_2100_8.5)
 write.csv(for_liqing,  "../results/SigmaD_plot1.csv", row.names=FALSE)
 
 for_liqing_Md <- data.frame(No=dat_Nov$No, lat=dat_Nov$lat,long=dat_Nov$long,A=dat_Nov$NN.Mdist_today_1800, B=dat_Nov$NN.Mdist_1800_today, C=dat_Nov$NN.Mdist_2100_4.5_today, D=dat_Nov$NN.Mdist_today_2100_4.5, E=dat_Nov$NN.Mdist_2100_8.5_today, F=dat_Nov$NN.Mdist_today_2100_8.5)
 write.csv(for_liqing_Md,  "../results/SigmaD_plot2.csv", row.names=FALSE)
   
   
-plot(final_dat12$lat_today_2100_8.5, final_dat12$lat) #If A is today and B is future, 
+#plot(final_dat12$lat_today_2100_8.5, final_dat12$lat) #If A is today and B is future, 
 #  where station No's climate in the future will come from today (or the closest similar climate today).
 # Latitude of the station today (x-axis) where the latitude of the station in the future (y-axis) will come from
 
 
-plot(final_dat12$lat, final_dat12$lat_2100_8.5_today) # If A is future and B is today, this 
+#plot(final_dat12$lat, final_dat12$lat_2100_8.5_today) # If A is future and B is today, this 
 # represents where station "No" will be found in the future (or the closest similar climate).
 # Latitude of the station today (x-axis) and where it will be in the future (y-axis)
 
 
+### Calculate percentages ####  
+N <- nrow(dat_Nov)  
+
+calc_perc <- function(x, descrip){
+  print(paste("Percent of cells with moderate dissimilarity for", descrip,":", 
+              round(sum(x>2 & x<4)/N,3)*100, sep=" "))
+  print(paste("Percent of cells with extreme dissimilarity for", descrip,":", 
+              round(sum(x>4)/N, 3)*100, sep=" "))
+}
+
+calc_perc(dat_Nov$NN.sigma_today_1800, "1800 disappearing in 2000")
+calc_perc(dat_Nov$NN.sigma_1800_today, "Novel climates in 2000 since 1800")
+calc_perc(dat_Nov$NN.sigma_2100_4.5_today, "2000 disappearing in 2100 4.5")
+calc_perc(dat_Nov$NN.sigma_today_2100_4.5, "Novel climates in 2100 4.5 since 2000")
+calc_perc(dat_Nov$NN.sigma_2100_8.5_today, "2000 disappearing in 2100 8.5")
+calc_perc(dat_Nov$NN.sigma_today_2100_8.5, "Novel climates in 2100 8.5 since 2000")
   
-  
-  
-  
-  
-  
-  
+# Visualize relationship between sigma_D and M_D
+plot(c(dat_Nov$NN.sigma_today_1800, dat_Nov$NN.sigma_today_2100_8.5),
+     c(dat_Nov$NN.Mdist_today_1800, dat_Nov$NN.Mdist_today_2100_8.5))

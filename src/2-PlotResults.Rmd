@@ -66,8 +66,8 @@ y <- seq(ab[2,1], ab[2,2], length.out = nbin[2])
   z_2100_4.5[z_2100_4.5>0] <- 1 # convert to presence/absence   
 
 ### Make Temp vs. Omega plot ####  
-pdf("../results/TempVsOmega.pdf", width=8, height=4)  
-par(mar=c(4,4,0.5,0.5), mfrow=c(1,2), oma=c(0,0,0.5,0.5))  
+pdf("../figures/TempVsOmega.pdf", width=8, height=4)  
+par(mar=c(4,2,0.5,0.5), mfrow=c(1,2), oma=c(0,2,0.5,0.5))  
 # 1800 to 2000  
   image(x, y, z_1800, col=c("white", adjustcolor("dodgerblue4",0.8)),
         xlab="Temperature (C)",
@@ -77,16 +77,17 @@ par(mar=c(4,4,0.5,0.5), mfrow=c(1,2), oma=c(0,0,0.5,0.5))
         las=1
         )
   image(x, y, z_2000, add=TRUE, col=c(rgb(0,0,0,0), adjustcolor("goldenrod", 0.8)))
-  text(20, 9.5, "1800 disappearing in 2000", col="dodgerblue4")  
-  lines(c(20,25), c(9, 5.4), lwd=3, col="dodgerblue4")
-  lines(c(20,6), c(9, 4.1), lwd=3, col="dodgerblue4")
+  text(0, 11, "A", cex=2)
+  text(20, 7.5, "1800 disappearing in 2000", col="dodgerblue4")  
+  lines(c(20,25), c(7, 4.6), lwd=3, col="dodgerblue4")
+  lines(c(20,5.3), c(7, 4.1), lwd=3, col="dodgerblue4")
    abline(1,0, lty=2, col=rgb(0,0,0,0.7))
-  text(22, 0.5, "Novel in 2000", col="goldenrod4", adj=0)  
-  lines(c(25,30), c(1, 3.7), lwd=3, col="goldenrod4")
-  lines(c(25,17), c(1, 2.1), lwd=3, col="goldenrod4")
+  text(30, 2.0, "Novel in 2000", col="goldenrod4", adj=0)  
+  lines(c(29,28), c(2.0, 3.0), lwd=3, col="goldenrod4")
+  lines(c(29,17), c(2.0, 1.9), lwd=3, col="goldenrod4")
   legend(40, 12, c("1800", "2000"), fill=c(adjustcolor("dodgerblue4", 0.8), 
       adjustcolor("goldenrod", 0.8)), bty="n", adj=0)
-  
+  mtext("Aragonite Saturation State", side=2, outer=TRUE, adj=0.65)
     
 # 2000 to 2100_8.5  
   image(x, y, z_2000, col=c(rgb(0,0,0,0), adjustcolor("goldenrod", 0.8)),
@@ -97,13 +98,14 @@ par(mar=c(4,4,0.5,0.5), mfrow=c(1,2), oma=c(0,0,0.5,0.5))
         las=1
         )
   image(x, y, z_2100_8.5, add=TRUE, col=c(rgb(0,0,0,0), adjustcolor("darkmagenta", 0.5)))
-  text(20, 7.5, "2000 disappearing in\n2100 RCP 8.5", col="goldenrod4")  
-  lines(c(20,20), c(6, 3), lwd=3, col="goldenrod4")
-  lines(c(20,10), c(6, 2), lwd=3, col="goldenrod4")
+  text(20, 6.5, "2000 disappearing in\n2100 RCP 8.5", col="goldenrod4")  
+  text(0, 11, "B", cex=2)
+  lines(c(20,20), c(5.5, 3), lwd=3, col="goldenrod4")
+  lines(c(20,10), c(5.5, 2), lwd=3, col="goldenrod4")
   abline(1,0, lty=2, col=rgb(0,0,0,0.7))
-  text(35, 2, "Novel in 2100\nRCP 8.5", col="darkmagenta", adj=0)  
+  text(36, 2, "Novel in 2100\nRCP 8.5", col="darkmagenta", adj=0)  
   lines(c(35,32), c(2, 2.5), lwd=3, col="darkmagenta")
-  lines(c(35,24), c(2, 1.8), lwd=3, col="darkmagenta")
+  lines(c(35,24), c(2, 1.9), lwd=3, col="darkmagenta")
   legend(40, 12, c("2000", "2100"), fill=c(adjustcolor("goldenrod", 0.8), 
          adjustcolor("darkmagenta", 0.5)), bty="n", adj=0)
 dev.off()  
@@ -120,6 +122,18 @@ par(mar=c(4,4,0.5,0.5), mfrow=c(1,1), oma=c(0,0,0.5,0.5))
   image(x, y, z_2100_4.5, add=TRUE, col=c(rgb(0,0,0,0), adjustcolor("darkorange", 0.5)))
   legend(30, 12, c("2000", "2100\nRCP 4.5"), fill=c(adjustcolor("goldenrod", 0.8), 
          adjustcolor("darkorange", 0.5)), bty="n", adj=0)
+```
+
+## Visualize pH, temp, and Arag
+```{r}
+subsamp <- sample(1:nrow(dat_2000), 10000, replace=FALSE)
+ggplot(dat_2000[subsamp,], aes(pH, Arag)) + 
+  geom_point(aes(color=SST), alpha=0.3, pch=20,  size=3) + 
+  scale_fill_gradient(low = "blue",high = "red")  +
+  scale_color_continuous(low = "blue",high = "red") +
+  xlab("pH") + ylab("Aragonite Saturation State") + 
+  theme(legend.position = "right") +
+  theme_classic()
 ```
 
 ## Subset to specific places on map:
