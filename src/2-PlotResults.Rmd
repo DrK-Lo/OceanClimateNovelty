@@ -28,13 +28,14 @@ dat8.5 <- fread("/Users/katie/Google Drive/katie_research/2018-OceanClimateNovel
 
 # This code generates a plot with a hard-to-see pattern. 
 
-plot(dat8.5$SST[dat1$Year==1800], dat8.5$Arag[dat1$Year==1800], pch=19, col=adjustcolor("black", 0.5))
-
-points(dat8.5$SST[dat1$Year==2000], dat8.5$Arag[dat1$Year==2000], pch=17, col=adjustcolor("lightblue", 0.2))
-
-points(dat1$SST[dat8.5$Year==2100], dat8.5$Arag[dat1$Year==2100], pch=22, col=adjustcolor("darkorange", 0.1), bg=adjustcolor("yellow", 0.2))
+# plot(dat8.5$SST[dat1$Year==1800], dat8.5$Arag[dat1$Year==1800], pch=19, col=adjustcolor("black", 0.5))
+# 
+# points(dat8.5$SST[dat1$Year==2000], dat8.5$Arag[dat1$Year==2000], pch=17, col=adjustcolor("lightblue", 0.2))
+# 
+# points(dat1$SST[dat8.5$Year==2100], dat8.5$Arag[dat1$Year==2100], pch=22, col=adjustcolor("darkorange", 0.1), bg=adjustcolor("yellow", 0.2))
 ```
 
+# Make Temp vs. Omega Plot
 Subset to points with unique x,y values:
 ```{r}
 summary(dat1$SST)
@@ -63,7 +64,7 @@ y <- seq(ab[2,1], ab[2,2], length.out = nbin[2])
 ## 2100 layer 4.5
   y2100_4.5 <- bin2(cbind(dat4.5$SST, dat4.5$Arag) , ab, nbin)
   z_2100_4.5 <- y2100_4.5$nc
-  z_2100_4.5[z_2100_4.5>0] <- 1 # convert to presence/absence   
+  z_2100_4.5[z_2100_4.5>1] <- 1 # convert to presence/absence   
 
 ### Make Temp vs. Omega plot ####  
 pdf("../figures/TempVsOmega.pdf", width=8, height=4)  
@@ -109,7 +110,87 @@ par(mar=c(4,2,0.5,0.5), mfrow=c(1,2), oma=c(0,2,0.5,0.5))
   legend(40, 12, c("2000", "2100"), fill=c(adjustcolor("goldenrod", 0.8), 
          adjustcolor("darkmagenta", 0.5)), bty="n", adj=0)
 dev.off()  
+```
 
+
+# Make Temp vs. pH Plot
+Subset to points with unique x,y values:
+```{r}
+summary(c(dat1$SST, dat8.5$SST))
+summary(c(dat1$pH, dat8.5$pH))
+
+ab=matrix(c(-5, 40, 7,9), nrow=2, byrow=TRUE)
+nbin = c(100,100)
+x <- seq(ab[1,1], ab[1,2], length.out = nbin[1])
+y <- seq(ab[2,1], ab[2,2], length.out = nbin[2])
+
+## 1800 layer
+  y1800 <- bin2(cbind(dat1$SST[dat1$Year<1850], dat1$pH[dat1$Year<1850]) , ab, nbin)
+  z_1800 <- y1800$nc
+  z_1800[z_1800>0] <- 1 # convert to presence/absence
+
+## 2000 layer
+  y2000 <- bin2(cbind(dat1$SST[dat1$Year>1950], dat1$pH[dat1$Year>1950]) , ab, nbin)
+  z_2000 <- y2000$nc
+  z_2000[z_2000>0] <- 1 # convert to presence/absence
+ 
+## 2100 layer 8.5
+  y2100_8.5 <- bin2(cbind(dat8.5$SST, dat8.5$pH) , ab, nbin)
+  z_2100_8.5 <- y2100_8.5$nc
+  z_2100_8.5[z_2100_8.5>0] <- 1 # convert to presence/absence   
+  
+## 2100 layer 4.5
+  y2100_4.5 <- bin2(cbind(dat4.5$SST, dat4.5$pH) , ab, nbin)
+  z_2100_4.5 <- y2100_4.5$nc
+  z_2100_4.5[z_2100_4.5>0] <- 1 # convert to presence/absence   
+
+### Make Temp vs. Omega plot ####  
+pdf("../figures/TempVspH.pdf", width=8, height=4)  
+par(mar=c(4,2,0.5,0.5), mfrow=c(1,2), oma=c(0,2,0.5,0.5))  
+# 1800 to 2000  
+  image(x, y, z_1800, col=c("white", adjustcolor("dodgerblue4",0.8)),
+        xlab="Temperature (C)",
+        ylab="pH",
+        bty="l",
+        xlim=c(-5, 60),
+        las=1
+        )
+  image(x, y, z_2000, add=TRUE, col=c(rgb(0,0,0,0), adjustcolor("goldenrod", 0.8)))
+  text(0, 8.9, "A", cex=2)
+  #text(20, 7.5, "1800 disappearing in 2000", col="dodgerblue4")  
+  #lines(c(20,25), c(7, 4.6), lwd=3, col="dodgerblue4")
+  #lines(c(20,5.3), c(7, 4.1), lwd=3, col="dodgerblue4")
+  # abline(1,0, lty=2, col=rgb(0,0,0,0.7))
+  #text(30, 2.0, "Novel in 2000", col="goldenrod4", adj=0)  
+  #lines(c(29,28), c(2.0, 3.0), lwd=3, col="goldenrod4")
+  #lines(c(29,17), c(2.0, 1.9), lwd=3, col="goldenrod4")
+  legend(40,8.9, c("1800", "2000"), fill=c(adjustcolor("dodgerblue4", 0.8), 
+      adjustcolor("goldenrod", 0.8)), bty="n", adj=0)
+  mtext("pH", side=2, outer=TRUE, adj=0.58, line=1)
+    
+# 2000 to 2100_8.5  
+  image(x, y, z_2000, col=c(rgb(0,0,0,0), adjustcolor("goldenrod", 0.8)),
+        xlab="Temperature (C)",
+        ylab="",
+        bty="l",
+        xlim=c(-5, 60),
+        las=1
+        )
+  image(x, y, z_2100_8.5, add=TRUE, col=c(rgb(0,0,0,0), adjustcolor("darkmagenta", 0.5)))
+  #text(20, 6.5, "2000 disappearing in\n2100 RCP 8.5", col="goldenrod4")  
+  text(0, 8.9, "B", cex=2)
+  #lines(c(20,20), c(5.5, 3), lwd=3, col="goldenrod4")
+  #lines(c(20,10), c(5.5, 2), lwd=3, col="goldenrod4")
+  #abline(1,0, lty=2, col=rgb(0,0,0,0.7))
+  #text(36, 2, "Novel in 2100\nRCP 8.5", col="darkmagenta", adj=0)  
+  #lines(c(35,32), c(2, 2.5), lwd=3, col="darkmagenta")
+  #lines(c(35,24), c(2, 1.9), lwd=3, col="darkmagenta")
+  legend(40, 8.9, c("2000", "2100"), fill=c(adjustcolor("goldenrod", 0.8), 
+         adjustcolor("darkmagenta", 0.5)), bty="n", adj=0)
+dev.off()  
+```
+
+```{r}
 # 2000 to 2100_4.5  
 par(mar=c(4,4,0.5,0.5), mfrow=c(1,1), oma=c(0,0,0.5,0.5))  
   image(x, y, z_2000, col=c(rgb(0,0,0,0), adjustcolor("goldenrod", 0.8)),
@@ -143,36 +224,73 @@ For the future Antartic, where is the climate going to come from today?
 
 
 ```{r}
+tmp <- data.frame(x=dat1$Lon, y=dat1$Lat, z=dat1$SST)
+tmp2 <- tmp %>% group_by(x, y) %>% summarise(z=mean(z))
+forPlot <- acast(tmp2, x~y, value.var="z")
+dim(forPlot)
+head(forPlot)
+
+image.plot(y=as.numeric(colnames(forPlot)),x=as.numeric(rownames(forPlot)), forPlot)
+polygon(x=c(50,50,200,200), y=c(-25,25,25,-25)) # IndoPacific
+polygon(x=c(20, 380, 380, 20), y=c(-90, -90, -66.5, -66.5))
+polygon(x=c(20, 380, 380, 20), y=c(90, 90, 66.5, 66.5))
+
+summary(tmp2$x)
 
 ### Subset
 head(dat_Nov)
 x <- dat_Nov
-cond_indop <- function(x){x$long<200 & x$long>150 & 
-  abs(x$lat) < 5}
-cond_antar <- function(x){x$long < 250 & x$long > 150 & x$lat < -60}
-
-head(norm_2000)
-head(stationInfo)
-
-A2 <- merge(norm_2000, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
-B2 <- merge(norm_2100, stationInfo, by.x="No", by.y="stations", all.x=TRUE)
+cond_indop <- function(x){x$Lon<200 & x$Lon>50 & 
+  abs(x$Lat) < 25}
+cond_antar <- function(x){x$Lat < -66.5}
+cond_artic <- function(x){x$Lat > 66.5}
 
 
-## Plot indopacific
-whichindop_2000 <- which(cond_indop(A2))
-whichindop_2100 <-  which(cond_indop(B2))
-plot(A$SST_sum, A$Arag_sum, xlim=c(-5, 35), ylim=c(-0.5,6))
-  points(A$SST_sum[whichindop_2000], A$Arag_sum[whichindop_2000], col=adjustcolor("green",0.5))
-  points(B$SST_sum[whichindop_2100], B$Arag_sum[whichindop_2100], pch=19, col=adjustcolor("darkgreen", 0.5))
-  ## Plot antartica
-  whichantar_2000 <- which(cond_antar(A2))
-  whichantar_2100 <-  which(cond_antar(B2))
-  points(A$SST_sum[whichantar_2000], A$Arag_sum[whichantar_2000], xlim=c(-5, 10), ylim=c(-0.5, 3),  col=adjustcolor("lightblue", 0.5))
-  points(B$SST_sum[whichantar_2100], B$Arag_sum[whichantar_2100], pch=19, col=adjustcolor("blue", 0.5))
+ab=matrix(c(-5, 40, 0,12), nrow=2, byrow=TRUE)
+nbin = c(100,100)
+x <- seq(ab[1,1], ab[1,2], length.out = nbin[1])
+y <- seq(ab[2,1], ab[2,2], length.out = nbin[2])
+## GetEnvel function ####
+PlotEnvel <- function(datf, col2){
+  a1 <- datf %>% select(SST, Arag) 
+  a1 <- bin2(cbind(a1$SST, a1$Arag), ab, nbin)
+  a2 <- a1$nc
+  a2[a2>0] <- 1
+  image(x,y, a2, add=TRUE, col=c(rgb(0,0,0,0), col2))  
+}
+```
 
-# where is future antartic going to look like?
-fa <- A2[which(A$SST_sum<10 &A$Arag_sum<1),] 
-Plot_nonInt(fa$lat, fa$long, 
-            1, world, "sigma dis.")
+```{r}
+## Plot climate envelopes for specific regions
+plot(c(-5, 40), c(0, 12), type="n")
+plot(c(-5, 15), c(0, 4), type="n")
+IndoPac_2000 <- dat1 %>% filter(Lon<200 & Lon>50 & abs(Lat) < 25 & Year > 1950 & Year < 2010)
+PlotEnvel(IndoPac_2000, "darkgreen")
+IndoPac_2100_8.5 <- dat8.5 %>% filter(Lon<200 & Lon>50 & 
+  abs(Lat) < 25)
+PlotEnvel(IndoPac_2100_8.5, adjustcolor("darkgreen", 0.5))
+
+Art_2000 <- dat1 %>% filter(Lat > 66.5 & Year > 1950 & Year < 2010)
+PlotEnvel(Art_2000, adjustcolor("red", 0.6))
+Art_2100_8.5 <- dat8.5 %>% filter(Lat > 66.5)
+#PlotEnvel(Art_2100_8.5, adjustcolor("red", 0.3))
+
+Ant_2000 <- dat1 %>% filter(Lat < -66.5 & Year > 1950 & Year < 2010)
+PlotEnvel(Ant_2000, adjustcolor("blue", 0.7))
+Ant_2100_8.5 <- dat8.5 %>% filter(Lat < -66.5)
+PlotEnvel(Ant_2100_8.5, adjustcolor("yellow", 0.5))
+
+```
+
+```{r}
+plotenv_SST_Arag<- function(d, ...){
+  x1 <- c(d[1,1], d[1,1], d[3,1], d[3,1])
+  y1 <- c(d[2,1], d[2,3], d[2,3], d[2,1])
+  polygon(x1, y1, ...)
+}
+
+# Plot climate envelopes
+
+plotenv_SST_Arag(mean_IndoPac_2000)
 
 ```
