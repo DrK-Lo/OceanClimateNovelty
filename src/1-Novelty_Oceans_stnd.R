@@ -49,15 +49,38 @@ unique(dat4.5$Year)
 #### 40-year climate normals ####
 #--------------------------------
   # for example, 1930 represents from 1/1/1925 to 12/31/1934.  
+dat_2000 <-   dat1 %>% filter(Year>1960 & Year<2010)
+x_SST <- mean(dat_2000$SST)
+s_SST <- sd(dat_2000$SST)
+x_Arag <- mean(dat_2000$Arag)
+s_Arag <- sd(dat_2000$Arag)
+x_pH <- mean(dat_2000$pH)
+s_pH <- sd(dat_2000$pH)
+
+head(dat_2000)  
+  dat_2000$SST <- (dat_2000$SST - x_SST)/s_SST
+  dat_2000$Arag <- (dat_2000$Arag - x_Arag)/s_Arag
+  dat_2000$pH <- (dat_2000$pH - x_pH)/s_pH
+  dat_2000 %>% summarise_each(sd)
 
   dat_1800 <- dat1 %>% filter(Year<1850)
   dim(dat_1800)
-  dat_2000 <-   dat1 %>% filter(Year>1960 & Year<2010)
-  dim(dat_2000)  
+  dat_1800$SST <- (dat_1800$SST - x_SST)/s_SST
+  dat_1800$Arag <- (dat_1800$Arag - x_Arag)/s_Arag
+  dat_1800$pH <- (dat_1800$pH - x_pH)/s_pH
+  
+  
   dat_2100_8.5 <-   dat8.5 
-  dim(dat_2100_8.5) 
+    dim(dat_2100_8.5) 
+    dat_2100_8.5$SST <- (dat_2100_8.5$SST - x_SST)/s_SST
+    dat_2100_8.5$Arag <- (dat_2100_8.5$Arag - x_Arag)/s_Arag
+    dat_2100_8.5$pH <- (dat_2100_8.5$pH - x_pH)/s_pH
+  
   dat_2100_4.5 <-   dat4.5 
   dim(dat_2100_4.5) 
+  dat_2100_4.5$SST <- (dat_2100_4.5$SST - x_SST)/s_SST
+  dat_2100_4.5$Arag <- (dat_2100_4.5$Arag - x_Arag)/s_Arag
+  dat_2100_4.5$pH <- (dat_2100_4.5$pH - x_pH)/s_pH
 
   sum(!complete.cases(dat_1800))
   sum(!complete.cases(dat_2000))
@@ -98,15 +121,15 @@ unique(dat4.5$Year)
   head(stationInfo)
   which(!complete.cases(stationInfo))
 
-#--------------------------------   
-### ICV
+#-------------------------------- 
+  ### ICV matrix
   head(dat_2000)  
   (whichcols <- which(names(dat_2000) %in% c("SST", "Arag", "pH")))
   C <- data.frame(dat_2000[,c(1, whichcols)], dat_2000[,c( whichcols)])
   head(C, 20)
-#--------------------------------    
+#--------------------------------   
 
-#--------------------------------  
+  #--------------------------------  
 ### 1800 analog to today ####
 # What are today's novel climates compared to 1800?
 # Novel climates are identified by comparing the 
@@ -128,7 +151,9 @@ unique(dat4.5$Year)
   
   # sanity check to make sure stations in right order
   identical(A$No, B$No) # should be true
- 
+  
+
+  
   NN.sigma_1800_today <- loop_sigma_D(A, B, C, "_1800_today")
   head(NN.sigma_1800_today)
   
@@ -245,7 +270,7 @@ unique(dat4.5$Year)
   hist(final_dat4$lat, breaks=seq(-90,90, by=1))
   
 #--------------------------------  
-### Today analog to 2100 RCP 8.5 novelty ####
+### Today analog to 2100 RCP 8.5 (Novelty) ####
 #--------------------------------
   identical(norm_2000$No, norm_2100_8.5$No)
 

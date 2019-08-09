@@ -15,7 +15,7 @@ packages_needed <- c("raster", "FNN", "RColorBrewer", "colorRamps", "adehabitatL
                      "data.table", "tidyverse", "fields", "ggplot2", "hexbin",
                      "rgdal", "tmap", "gstat", "sp", "maptools", "sf", "fasterize",
                      "fansi", "raster", "tmap", "gstat", "ContourFunctions","ash",
-                     "gridExtra"
+                     "gridExtra", "shape"
                      )
 
 for (i in 1:length(packages_needed)){
@@ -92,7 +92,8 @@ calculate_normals <- function(dat1){
 
 loop_sigma_D <- function(A, B, C, append=""){
   if(!identical(A$No, B$No)){print("Error"); break}
-  NN.sigma <- data.frame(No=A$No,NN.sigma=NA, NN.station=NA, NN.Mdist=NA)
+  
+  NN.sigma <- data.frame(No=A$No, NN.sigma=NA, NN.station=NA, NN.Mdist=NA)
   
   for(j in 1:nrow(NN.sigma)){ 
     NN.sigma[j,2:4] <- calc_sigma_D(A, B, C, NN.sigma$No[j])
@@ -104,8 +105,10 @@ loop_sigma_D <- function(A, B, C, append=""){
 
   
 calc_sigma_D <- function(A, B, C, whichStation){
-  # A is past climate, the base that a station from the future (B) is compared to
-  # B is future climate, will be subset to a particular station for analysis
+  # A is baseline, the base that a station from B is compared to
+    # If A is past and B is future, then degree of novelty
+    # If A is future and B is past, then degree of disappearance
+  # B will be subset to a particular station for analysis
   # C is the data frame used to calculate the ICV, will also be subset to a particular station for analysis
   if(!identical(A$No, B$No)){print("Error"); break}
   if(!identical(dim(A), dim(B))){print("Error A and B different dimensions")}
@@ -126,7 +129,7 @@ calc_sigma_D <- function(A, B, C, whichStation){
     # Takes about 1.5 sec/iteration on a typical laptop. 
     
     ## Select data relevant to ICV proxy j
-    Bj <- B[which(proxy==j),]   # future climates
+    Bj <- B[which(proxy==j),]   # set of data from station j
     # select locations for which ICV proxy j is the closest ICV proxy. 
     Cj <- C[which(C.id==j),]    # reference period ICV at ICV proxy j
     
@@ -166,15 +169,15 @@ calc_sigma_D <- function(A, B, C, whichStation){
     #plot(PCA$sdev)
     #round(PCA$sdev, 2)
     
-    PCs <- max(which(unlist(summary(PCA)[1])>trunc.SDs))    
+    PCs <- max(c(which(unlist(summary(PCA)[1])>trunc.SDs),2))    
     # find the number of PCs to retain using the PC truncation 
     # rule of eigenvector stdev > the truncation threshold
-    X <- as.data.frame(predict(PCA,A.prime))   
+    X <- as.data.frame(predict(PCA,A.prime))   # X is new baseline
     # project the analog pool onto the PCs
     head(X)
     
     Yj <- as.data.frame(predict(PCA,Bj.prime)) 
-    # project the projected future conditions onto the PCs
+    # project the queried location onto the PCs
     
     Zj <- as.data.frame(predict(PCA,Cj.prime)) 
     # project the reference ICV onto the PCs
@@ -189,15 +192,16 @@ calc_sigma_D <- function(A, B, C, whichStation){
     Zj.sd <- apply(Zj,2,sd, na.rm=T)     
     #standard deviation of 1951-1990 interannual variability in each principal component, ignoring missing years
     #Zj.sd
-    X.prime <- sweep(X,MARGIN=2,Zj.sd,`/`) 
+    X.prime <- sweep(X,MARGIN=2,Zj.sd,`/`) # standardized baseline
     #standardize the analog pool  
     #head(X.prime)
     Yj.prime <- sweep(Yj,MARGIN=2,Zj.sd,`/`) 
+    Zj.prime <- sweep(Zj, MARGIN=2, Zj.sd,`/`)
     #standardize the projected conditions   
     #Yj.prime
     ## Step 3b: find the sigma dissimilarity of each projected condition with 
     # its best analog (Euclidean nearest neighbour) in the observed analog pool.
-    X.prime <- X.prime[complete.cases(X.prime),]
+    #X.prime <- X.prime[complete.cases(X.prime),] # standardized baseline
     nnd <- get.knnx(data=X.prime[,1:PCs],
                     query=Yj.prime[,1:PCs],
                     k=1,algorithm="brute")
@@ -214,9 +218,65 @@ calc_sigma_D <- function(A, B, C, whichStation){
     NN.sigma <- qchi(NN.chi,1) 
     # values of the chi percentiles on a standard half-normal distribution (chi distribution with one degree of freedom)
   
-    NN.station <- A$No[as.vector(nnd[[1]])]
+    NN.station <- A$No[nnd$nn.index]
+    #
     
-    return(data.frame(NN.sigma, NN.station, NN.Mdist=NN.dist))
+    # Evaluation and plotting code
+    NN.sigma
+    X.prime[nnd$nn.index, 1:PCs]
+    Yj.prime[,1:PCs]
+    rbind(Bj,A[nnd$nn.index,])
+    
+    makePlot=FALSE
+    if(whichStation %in% c(18906,18952)){makePlot=TRUE}
+      # 18906 is equator, high novelty and high disappearance
+      # 18952 is n. pacific, low novelty but high disappearance
+    if(makePlot==TRUE){
+      
+    png(paste0("results/",whichStation, "_sigma=", round(NN.sigma,2),"_Md=",round(NN.dist,2),"blue-focal_red-NN.png"), 
+        height=8, width=3, units="in", res=600)
+    par(mar=c(4,4,1,1), mfrow=c(3,1))
+    plot(c(X.prime[,1], Yj.prime[1,1]), c(X.prime[,2], Yj.prime[1,2]), 
+         xlab="PC1", ylab="PC2", bty="l", las=1, col=adjustcolor("grey", 0.5),
+         xlim=c(-45,50), ylim=c(-35,50))
+    points(Zj.prime[,1], Zj.prime[,2], col=adjustcolor("magenta", 0.3))
+    points(Yj.prime[1,1], Yj.prime[1,2], col="blue", pch=19, cex=2)
+    points(X.prime[nnd$nn.index,1], X.prime[nnd$nn.index,2], col="black", bg="red", pch=23, cex=2)
+    Arrows(x0=rep(0, 3), y0=rep(0, 3), 
+           x1=(PCA$rotation[1:3,1]*PCA$sdev[1]*10), 
+           y1=(PCA$rotation[1:3,2]*PCA$sdev[2]*10),
+           code=2, col=adjustcolor("black", 0.5), arr.type="curved")
+    text(x=(PCA$rotation[1:3,1]*PCA$sdev[1]*10), 
+         y=(PCA$rotation[1:3,2]*PCA$sdev[2]*10), 
+         labels=rownames(PCA$rotation)[1:3], col="black", adj=0)
+    xa <- par("usr")[1] + (par("usr")[2]-par("usr")[1])*0.1
+    ya <- par("usr")[4] - (par("usr")[4]-par("usr")[3])*0.1
+    text(xa, ya, "A",  cex=2) 
+    
+    plot(c(A$SST_sum, Bj$SST_sum),c(A$Arag_sum,Bj$Arag_sum), xlab="Summer SST", ylab="Summer Aragonite S.S.",
+         bty="l", las=1, col=adjustcolor("grey", 0.5))
+    points(Cj$SST, Cj$Arag, col=adjustcolor("magenta", 0.3))
+    points(Bj$SST_sum, Bj$Arag_sum, col="blue", pch=19, cex=2)
+    points(A$SST_sum[nnd$nn.index], A$Arag_sum[nnd$nn.index], col="black", bg="red", pch=23, cex=2)
+    xa <- par("usr")[1] + (par("usr")[2]-par("usr")[1])*0.1
+    ya <- par("usr")[4] - (par("usr")[4]-par("usr")[3])*0.1
+    text(xa, ya, "B",  cex=2) 
+    
+    plot(c(A$pH_sum,Bj$pH_sum),c(A$Arag_sum,Bj$Arag_sum), xlab="Summer pH", ylab="Summer Aragonite S.S.",
+         bty="l", las=1, col=adjustcolor("grey", 0.5))
+    points(Cj$pH, Cj$Arag, col=adjustcolor("magenta", 0.3))
+    points(Bj$pH_sum, Bj$Arag_sum, col="blue", pch=19, cex=2)
+    points(A$pH_sum[nnd$nn.index], A$Arag_sum[nnd$nn.index], col="black", bg="red", pch=23, cex=2)
+    xa <- par("usr")[1] + (par("usr")[2]-par("usr")[1])*0.1
+    ya <- par("usr")[4] - (par("usr")[4]-par("usr")[3])*0.1
+    text(xa, ya, "C",  cex=2) 
+    dev.off()
+    
+    }
+    
+    #names(NN.station) <- paste0("NN.station",names(NN.station))
+    
+    return(data.frame(NN.sigma, NN.Mdist=NN.dist, NN.station))
 }
 
 
