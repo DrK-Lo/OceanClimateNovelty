@@ -47,8 +47,8 @@ calculate_normals <- function(dat1){
   month2 <- c(12,1,2)
   
   ## Summer calculations
-  x_sum <- dat1 %>% filter((Lat < 0 & Month %in% month2)|
-                             (Lat > 0 & Month %in% month1))
+  x_sum <- dat1 %>% filter((Lat <= 0 & Month %in% month2)|
+                             (Lat >= 0 & Month %in% month1))
   SST_sum <- tapply(x_sum$SST,INDEX = x_sum$No,mean, rm.na=TRUE)
   #length(SST_sum)
   Arag_sum <- tapply(x_sum$Arag,INDEX = x_sum$No,mean, rm.na=TRUE)

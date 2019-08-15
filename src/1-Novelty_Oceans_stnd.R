@@ -1,5 +1,5 @@
 ### KE Lotterhos
-### Oct 2018 - July 2019
+### Oct 2018 - Oct 2019
 ### Northeastern University
 ### Mod. Áki - Nov. 2018 - June 2019
 
@@ -19,7 +19,7 @@
 #### System setup ####
 ##################################
 ## Specify location of data ####
-  setwd("/Users/katie/Desktop/Repos/OceanClimateNovelty/") 
+  setwd("/Users/lotterhos/Documents/GitHub/OceanClimateNovelty") 
   #setwd("~/Desktop/PostDoc/OceanClimateNovelty/")
 
   source("src/0-Novelty_Oceans_Functions.R")
@@ -27,9 +27,9 @@
 ##################################
 #### Read in the input data ####
 ##################################
-dat1 <- fread("/Users/katie/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_1800_2000.txt", sep = ",")
-dat4.5 <- fread("/Users/katie/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_2070_2100_RCP45.txt", sep = ",")
-dat8.5 <- fread("/Users/katie/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_2070_2100_RCP85.txt", sep = ",")
+dat1 <- fread("/Users/lotterhos/Google Drive/katie_2research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_1800_2000.txt", sep = ",")
+dat4.5 <- fread("/Users/lotterhos/Google Drive/katie_2research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_2070_2100_RCP45.txt", sep = ",")
+dat8.5 <- fread("/Users/lotterhos/Google Drive/katie_2research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_2070_2100_RCP85.txt", sep = ",")
 
 head(dat1)
 head(dat8.5)
@@ -38,7 +38,32 @@ unique(dat1$Year)
 unique(dat8.5$Year)
 unique(dat4.5$Year)
 
+hist(c(dat1$Arag, dat8.5$Arag))
+hist(log10(c(dat1$Arag, dat8.5$Arag)))
 
+##################################
+#### Log-transform Arag ####
+##################################
+dat1$Arag <- log10(dat1$Arag)
+dat4.5$Arag <- log10(dat4.5$Arag)
+dat8.5$Arag <- log10(dat8.5$Arag)
+
+#  Aragonite saturation is a ratio variable; it is limited at zero and 
+# proportional changes are meaningful. The analysis uses raw values of 
+# aragonite saturation state. Under raw scaling, the difference between 1 and 2 
+# is equal to the difference between zero and one, which doesn’t reflect the 
+# meaning of the variable. Instead, the difference between 1 and 2 should 
+# be given the same significance as the difference between 0.5 and 1 (doubling vs halving). 
+# Log-transforming aragonite saturation state will produce this more meaningful 
+# proportional scaling.
+
+# More generally on the same topic: The need for proportional scaling is the 
+# reason why precipitation and other ratio variables (e.g. degree-days) are 
+# typically log-transformed in climate space analysis. In theory, all variables 
+# should be log-transformed to produce an environmental space where distances 
+# are comparable for different locations; however, in practice temperature 
+# doesn’t need to be log-transformed because it doesn’t vary across orders 
+# of magnitude, and in our case pH is already a log-scaled variable.
 
 #boxplot(dat8.5$pH ~ dat8.5$Year)
 #boxplot(dat4.5$pH ~ dat4.5$Year)
@@ -50,37 +75,40 @@ unique(dat4.5$Year)
 #--------------------------------
   # for example, 1930 represents from 1/1/1925 to 12/31/1934.  
 dat_2000 <-   dat1 %>% filter(Year>1960 & Year<2010)
-x_SST <- mean(dat_2000$SST)
-s_SST <- sd(dat_2000$SST)
-x_Arag <- mean(dat_2000$Arag)
-s_Arag <- sd(dat_2000$Arag)
-x_pH <- mean(dat_2000$pH)
-s_pH <- sd(dat_2000$pH)
 
-head(dat_2000)  
-  dat_2000$SST <- (dat_2000$SST - x_SST)/s_SST
-  dat_2000$Arag <- (dat_2000$Arag - x_Arag)/s_Arag
-  dat_2000$pH <- (dat_2000$pH - x_pH)/s_pH
-  dat_2000 %>% summarise_each(sd)
-
-  dat_1800 <- dat1 %>% filter(Year<1850)
-  dim(dat_1800)
-  dat_1800$SST <- (dat_1800$SST - x_SST)/s_SST
-  dat_1800$Arag <- (dat_1800$Arag - x_Arag)/s_Arag
-  dat_1800$pH <- (dat_1800$pH - x_pH)/s_pH
-  
-  
-  dat_2100_8.5 <-   dat8.5 
-    dim(dat_2100_8.5) 
-    dat_2100_8.5$SST <- (dat_2100_8.5$SST - x_SST)/s_SST
-    dat_2100_8.5$Arag <- (dat_2100_8.5$Arag - x_Arag)/s_Arag
-    dat_2100_8.5$pH <- (dat_2100_8.5$pH - x_pH)/s_pH
-  
-  dat_2100_4.5 <-   dat4.5 
-  dim(dat_2100_4.5) 
-  dat_2100_4.5$SST <- (dat_2100_4.5$SST - x_SST)/s_SST
-  dat_2100_4.5$Arag <- (dat_2100_4.5$Arag - x_Arag)/s_Arag
-  dat_2100_4.5$pH <- (dat_2100_4.5$pH - x_pH)/s_pH
+# Below is a standardization code that can be deleted becuase the PCA
+# does the standardization
+# x_SST <- mean(dat_2000$SST)
+# s_SST <- sd(dat_2000$SST)
+# x_Arag <- mean(dat_2000$Arag)
+# s_Arag <- sd(dat_2000$Arag)
+# x_pH <- mean(dat_2000$pH)
+# s_pH <- sd(dat_2000$pH)
+# 
+# head(dat_2000)  
+#   dat_2000$SST <- (dat_2000$SST - x_SST)/s_SST
+#   dat_2000$Arag <- (dat_2000$Arag - x_Arag)/s_Arag
+#   dat_2000$pH <- (dat_2000$pH - x_pH)/s_pH
+#   dat_2000 %>% summarise_each(sd)
+# 
+#   dat_1800 <- dat1 %>% filter(Year<1850)
+#   dim(dat_1800)
+#   dat_1800$SST <- (dat_1800$SST - x_SST)/s_SST
+#   dat_1800$Arag <- (dat_1800$Arag - x_Arag)/s_Arag
+#   dat_1800$pH <- (dat_1800$pH - x_pH)/s_pH
+#   
+#   
+#   dat_2100_8.5 <-   dat8.5 
+#     dim(dat_2100_8.5) 
+#     dat_2100_8.5$SST <- (dat_2100_8.5$SST - x_SST)/s_SST
+#     dat_2100_8.5$Arag <- (dat_2100_8.5$Arag - x_Arag)/s_Arag
+#     dat_2100_8.5$pH <- (dat_2100_8.5$pH - x_pH)/s_pH
+#   
+#   dat_2100_4.5 <-   dat4.5 
+#   dim(dat_2100_4.5) 
+#   dat_2100_4.5$SST <- (dat_2100_4.5$SST - x_SST)/s_SST
+#   dat_2100_4.5$Arag <- (dat_2100_4.5$Arag - x_Arag)/s_Arag
+#   dat_2100_4.5$pH <- (dat_2100_4.5$pH - x_pH)/s_pH
 
   sum(!complete.cases(dat_1800))
   sum(!complete.cases(dat_2000))
@@ -125,11 +153,25 @@ head(dat_2000)
   ### ICV matrix
   head(dat_2000)  
   (whichcols <- which(names(dat_2000) %in% c("SST", "Arag", "pH")))
-  C <- data.frame(dat_2000[,c(1, whichcols)], dat_2000[,c( whichcols)])
-  head(C, 20)
+  ICV_summer <- dat_2000 %>% filter((Lat >=0 & Month %in% c(6,7,8)) | 
+                (Lat <=0 & Month %in% c(12,1,2))) %>% 
+                  select(No, SST, Arag, pH) 
+  names(ICV_summer)[2:4] <- paste0(names(ICV_summer)[2:4],"_sum")
+  head(ICV_summer)
+  ICV_summer$uniq <- 1:nrow(ICV_summer)
+  
+  ICV_winter <- dat_2000 %>% filter((Lat <0 & Month %in% c(6,7,8)) | 
+                                      (Lat >0 & Month %in% c(12,1,2))) %>% 
+                select(SST, Arag, pH) 
+  names(ICV_winter) <- paste0(names(ICV_winter),"_win")
+  ICV_winter$uniq <- 1:nrow(ICV_winter)
+  
+  C <- left_join(ICV_summer,ICV_winter, by="uniq")
+  C <- C %>% select(-"uniq")
+  head(C)
 #--------------------------------   
 
-  #--------------------------------  
+#--------------------------------  
 ### 1800 analog to today ####
 # What are today's novel climates compared to 1800?
 # Novel climates are identified by comparing the 
