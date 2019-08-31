@@ -1,3 +1,6 @@
 /data/large_files/*
 /data/new_data/*
 .DS_Store
+*.png
+*.Rdata
+*.Rhistory

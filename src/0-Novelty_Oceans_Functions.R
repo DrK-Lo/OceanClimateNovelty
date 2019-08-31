@@ -85,26 +85,49 @@ calculate_normals <- function(dat1){
 }
 
 
+
+calculate_normals_annual <- function(dat1){
+  # input the data frame for the span of years you want the normals for
+  
+  ## Summer calculations
+  SST <- tapply(dat1$SST,INDEX = dat1$No,mean, rm.na=TRUE)
+  #length(SST_sum)
+  Arag <- tapply(dat1$Arag,INDEX = dat1$No,mean, rm.na=TRUE)
+  #length(Arag_sum)
+  pH <- tapply(dat1$pH,INDEX = dat1$No,mean, rm.na=TRUE)
+  
+  
+  # check that the column names are identical:
+  if(!(identical(names(SST), names(Arag)) |
+       #  identical(names(Arag_sum), names(Calc_sum)) |
+       identical(names(pH), names(SST)))
+  ){break}
+  
+  # create summer data frame for each station
+  normals <- data.frame(No=as.integer(names(SST)), SST,Arag, pH  )
+  return(normals[order(normals$No),])
+}
+
 #--------------------------------  
 ### Calculate Sigma Dissimilarity ####
 #--------------------------------
 #initiate the data frame to store the projected sigma dissimilarity of best analogs for each grid cell. 
 
-loop_sigma_D <- function(A, B, C, append=""){
+loop_sigma_D <- function(A, B, C, append="", makePlot=FALSE){
   if(!identical(A$No, B$No)){print("Error"); break}
   
-  NN.sigma <- data.frame(No=A$No, NN.sigma=NA, NN.station=NA, NN.Mdist=NA)
+  NN.sigma <- data.frame(No=A$No, NN.sigma=NA, NN.station=NA, NN.Mdist=NA, numPCs=NA)
   
   for(j in 1:nrow(NN.sigma)){ 
-    NN.sigma[j,2:4] <- calc_sigma_D(A, B, C, NN.sigma$No[j])
+    NN.sigma[j,2:5] <- calc_sigma_D(A, B, C, NN.sigma$No[j], append, makePlot)
     if(j%%100==0){print(c(j, NN.sigma$No[j], nrow(NN.sigma)))}
   }
-  names(NN.sigma)[2:4] <- paste0(names(NN.sigma)[2:4],append)
+  names(NN.sigma)[2:5] <- paste0(names(NN.sigma)[2:5],append)
   return(NN.sigma)
 }
 
   
-calc_sigma_D <- function(A, B, C, whichStation){
+calc_sigma_D <- function(A, B, C, whichStation, append="", makePlot=FALSE){
   # A is baseline, the base that a station from B is compared to
     # If A is past and B is future, then degree of novelty
     # If A is future and B is past, then degree of disappearance
@@ -124,6 +147,7 @@ calc_sigma_D <- function(A, B, C, whichStation){
   trunc.SDs <- 0.1 #truncation 
 
   j <- whichStation
+    # 29736, 29789
       
     # run the novelty calculation once for each ICV proxy. 
     # Takes about 1.5 sec/iteration on a typical laptop. 
@@ -169,7 +193,7 @@ calc_sigma_D <- function(A, B, C, whichStation){
     #plot(PCA$sdev)
     #round(PCA$sdev, 2)
     
-    PCs <- max(c(which(unlist(summary(PCA)[1])>trunc.SDs),2))    
+    (PCs <- max(c(which(unlist(summary(PCA)[1])>trunc.SDs),1)))
     # find the number of PCs to retain using the PC truncation 
     # rule of eigenvector stdev > the truncation threshold
     X <- as.data.frame(predict(PCA,A.prime))   # X is new baseline
@@ -183,7 +207,7 @@ calc_sigma_D <- function(A, B, C, whichStation){
     # project the reference ICV onto the PCs
     
     
-    #plot(X[,1], X[,2]) # analog
+    #plot(X[,1], X[,2], xlim=c(-60, 20)) # analog
     #points(Zj[,1], Zj[,2], pch=19, col=rgb(1,0,0, 0.5)) # reference ICV
     #points(Yj[,1], Yj[,2], pch=19, col=rgb(0,1,0)) # future conditions
     
@@ -197,6 +221,10 @@ calc_sigma_D <- function(A, B, C, whichStation){
     #head(X.prime)
     Yj.prime <- sweep(Yj,MARGIN=2,Zj.sd,`/`) 
     Zj.prime <- sweep(Zj, MARGIN=2, Zj.sd,`/`)
+    
+    #plot(X.prime[,1], X.prime[,2], xlim=c(-60, 20)) # analog
+    #points(Zj.prime[,1], Zj.prime[,2], pch=19, col=rgb(1,0,0, 0.5)) # reference ICV
+    #points(Yj.prime[,1], Yj.prime[,2], pch=19, col=rgb(0,1,0)) # future conditions
     #standardize the projected conditions   
     #Yj.prime
     ## Step 3b: find the sigma dissimilarity of each projected condition with 
@@ -208,75 +236,137 @@ calc_sigma_D <- function(A, B, C, whichStation){
     NN.dist <- as.vector(nnd[[2]]) 
     # Euclidean nearest neighbour distance in the z-standardized PCs of 
     # interannual climatic variability, i.e. the Mahalanobian nearest neighbour. 
-    NN.chi <- pchi(NN.dist,PCs) # percentile of the nearest neighbour 
+    NN.chi <- pchi(NN.dist,PCs, rel.tol=.Machine$double.eps^0.8) 
+    # percentile of the nearest neighbour 
+    # increase the precision with 'rel.tol' #(default is ^0.5) to help with rounding error issues
     # distance on the chi distribution with degrees of freedom 
     # equaling the dimensionality of the distance measurement (PCs)
-    if(NN.chi>=1){NN.chi=1-1e-16}
-      # sometimes with rounding error the NN.chi is greater than 1
-      # if NN.chi equals 1 than NN.sigma is infinite
+    if(NN.chi>=(1-1e-16)){NN.chi=1-1e-16}
+      # sometimes with rounding error the NN.chi is printed as 1 but so close to 1 that
+      # small changes in the decimal place equal large changes in sigma.
+      # Also, if NN.chi equals 1 exactly than NN.sigma is infinite
       # this slight transformation gives the largest possible value of NN.sigma
     NN.sigma <- qchi(NN.chi,1) 
     # values of the chi percentiles on a standard half-normal distribution (chi distribution with one degree of freedom)
-  
+    if(NN.dist>9){NN.sigma <- qchi(1-1e-16,1) }
+      # there are still issues with rounding error in the tail of the chi squared distribution
+      # see my notebook post in the manuscript draft about this
     NN.station <- A$No[nnd$nn.index]
     #
-    
     # Evaluation and plotting code
-    NN.sigma
-    X.prime[nnd$nn.index, 1:PCs]
-    Yj.prime[,1:PCs]
-    rbind(Bj,A[nnd$nn.index,])
+    #NN.sigma
+    #X.prime[nnd$nn.index, 1:PCs]
+    #Yj.prime[,1:PCs]
+    #rbind(Bj,A[nnd$nn.index,])
     
-    makePlot=FALSE
-    if(whichStation %in% c(18906,18952)){makePlot=TRUE}
+    
+    if(whichStation %in% c(18906,18952, 29736, 29789, 8193, 29319)){makePlot=TRUE}
       # 18906 is equator, high novelty and high disappearance
       # 18952 is n. pacific, low novelty but high disappearance
     if(makePlot==TRUE){
       
-    png(paste0("results/",whichStation, "_sigma=", round(NN.sigma,2),"_Md=",round(NN.dist,2),"blue-focal_red-NN.png"), 
-        height=8, width=3, units="in", res=600)
-    par(mar=c(4,4,1,1), mfrow=c(3,1))
-    plot(c(X.prime[,1], Yj.prime[1,1]), c(X.prime[,2], Yj.prime[1,2]), 
+    png(paste0(append, "_",whichStation,  "_sigma=", round(NN.sigma,2),"_Md=",round(NN.dist,2),"_numPCs=",PCs,"_blue-focal_red-NN.png"), 
+        height=8, width=8, units="in", res=600)
+    par(mar=c(4,4,1,1), mfrow=c(2,2))
+    
+    scale=20
+    n = nrow(PCA$rotation)
+    
+    # plot first and second PC
+    x <- c(X.prime[,1], Yj.prime[1,1], Zj.prime[,1])
+    y <- c(X.prime[,2], Yj.prime[1,2], Zj.prime[,2])
+    plot(x, y,
          xlab="PC1", ylab="PC2", bty="l", las=1, col=adjustcolor("grey", 0.5),
-         xlim=c(-45,50), ylim=c(-35,50))
-    points(Zj.prime[,1], Zj.prime[,2], col=adjustcolor("magenta", 0.3))
-    points(Yj.prime[1,1], Yj.prime[1,2], col="blue", pch=19, cex=2)
-    points(X.prime[nnd$nn.index,1], X.prime[nnd$nn.index,2], col="black", bg="red", pch=23, cex=2)
-    Arrows(x0=rep(0, 3), y0=rep(0, 3), 
-           x1=(PCA$rotation[1:3,1]*PCA$sdev[1]*10), 
-           y1=(PCA$rotation[1:3,2]*PCA$sdev[2]*10),
-           code=2, col=adjustcolor("black", 0.5), arr.type="curved")
-    text(x=(PCA$rotation[1:3,1]*PCA$sdev[1]*10), 
-         y=(PCA$rotation[1:3,2]*PCA$sdev[2]*10), 
-         labels=rownames(PCA$rotation)[1:3], col="black", adj=0)
+         xlim=c(min(c(x, PCA$rotation[1:n,1]*PCA$sdev[1]*scale)), 
+                max(c(x, PCA$rotation[1:n,1]*PCA$sdev[1]*scale))),
+         ylim=c(min(c(y,(PCA$rotation[1:n,2]*PCA$sdev[2]*scale))),
+                max(c(y,(PCA$rotation[1:n,2]*PCA$sdev[2]*scale))))
+         )
+    points(Zj.prime[,1], Zj.prime[,2], col=adjustcolor("magenta", 0.3), cex=1)
+    points(Yj.prime[1,1], Yj.prime[1,2], col="blue", pch=19, cex=1)
+    points(X.prime[nnd$nn.index,1], X.prime[nnd$nn.index,2], col=adjustcolor("black",0.8), bg=adjustcolor("green",0.7), pch=23, cex=1)
+    Arrows(x0=rep(0, 6), y0=rep(0, 6), 
+           x1=(PCA$rotation[1:n,1]*PCA$sdev[1]*scale), 
+           y1=(PCA$rotation[1:n,2]*PCA$sdev[2]*scale),
+           code=2, col=adjustcolor("black", 0.2), arr.type="curved")
+    text(x=(PCA$rotation[1:n,1]*PCA$sdev[1]*scale), 
+         y=(PCA$rotation[1:n,2]*PCA$sdev[2]*scale), 
+         labels=rownames(PCA$rotation)[1:6], col=adjustcolor("black",0.8), adj=0.5)
     xa <- par("usr")[1] + (par("usr")[2]-par("usr")[1])*0.1
     ya <- par("usr")[4] - (par("usr")[4]-par("usr")[3])*0.1
     text(xa, ya, "A",  cex=2) 
+    legend(xa, ya*0.95, c("Focal station", "NN"), col=c("blue", "black"), pch=c(19,23), 
+           pt.bg=c("black", "green"), bty="n")
     
-    plot(c(A$SST_sum, Bj$SST_sum),c(A$Arag_sum,Bj$Arag_sum), xlab="Summer SST", ylab="Summer Aragonite S.S.",
-         bty="l", las=1, col=adjustcolor("grey", 0.5))
-    points(Cj$SST, Cj$Arag, col=adjustcolor("magenta", 0.3))
-    points(Bj$SST_sum, Bj$Arag_sum, col="blue", pch=19, cex=2)
-    points(A$SST_sum[nnd$nn.index], A$Arag_sum[nnd$nn.index], col="black", bg="red", pch=23, cex=2)
+    # plot first and third PC
+    x <- c(X.prime[,1], Yj.prime[1,1], Zj.prime[,1])
+    y <- c(X.prime[,2], Yj.prime[1,3], Zj.prime[,3])
+    plot(x, y,
+         xlab="PC1", ylab="PC3", bty="l", las=1, col=adjustcolor("grey", 0.5),
+         xlim=c(min(c(x, PCA$rotation[1:n,1]*PCA$sdev[1]*scale)), 
+                max(c(x, PCA$rotation[1:n,1]*PCA$sdev[1]*scale))),
+         ylim=c(min(c(y,(PCA$rotation[1:n,3]*PCA$sdev[3]*scale))),
+                max(c(y,(PCA$rotation[1:n,3]*PCA$sdev[3]*scale))))
+    )
+    points(Zj.prime[,1], Zj.prime[,3], col=adjustcolor("magenta", 0.3), cex=1)
+    points(Yj.prime[1,1], Yj.prime[1,3], col="blue", pch=19, cex=1)
+    points(X.prime[nnd$nn.index,1], X.prime[nnd$nn.index,3], 
+           col=adjustcolor("black",0.8), bg=adjustcolor("green",0.7), pch=23, cex=1)
+    Arrows(x0=rep(0, 6), y0=rep(0, 6), 
+           x1=(PCA$rotation[1:n,1]*PCA$sdev[1]*scale), 
+           y1=(PCA$rotation[1:n,3]*PCA$sdev[3]*scale),
+           code=2, col=adjustcolor("black", 0.2), arr.type="curved")
+    text(x=(PCA$rotation[1:n,1]*PCA$sdev[1]*scale), 
+         y=(PCA$rotation[1:n,3]*PCA$sdev[3]*scale), 
+         labels=rownames(PCA$rotation)[1:n], col=adjustcolor("black",0.8), adj=0.5)
     xa <- par("usr")[1] + (par("usr")[2]-par("usr")[1])*0.1
     ya <- par("usr")[4] - (par("usr")[4]-par("usr")[3])*0.1
     text(xa, ya, "B",  cex=2) 
     
-    plot(c(A$pH_sum,Bj$pH_sum),c(A$Arag_sum,Bj$Arag_sum), xlab="Summer pH", ylab="Summer Aragonite S.S.",
-         bty="l", las=1, col=adjustcolor("grey", 0.5))
-    points(Cj$pH, Cj$Arag, col=adjustcolor("magenta", 0.3))
-    points(Bj$pH_sum, Bj$Arag_sum, col="blue", pch=19, cex=2)
-    points(A$pH_sum[nnd$nn.index], A$Arag_sum[nnd$nn.index], col="black", bg="red", pch=23, cex=2)
-    xa <- par("usr")[1] + (par("usr")[2]-par("usr")[1])*0.1
-    ya <- par("usr")[4] - (par("usr")[4]-par("usr")[3])*0.1
-    text(xa, ya, "C",  cex=2) 
+    # plot(c(A$SST_sum, Bj$SST_sum),c(A$Arag_sum,Bj$Arag_sum), xlab="Summer SST", ylab="Summer Aragonite S.S.",
+    #      bty="l", las=1, col=adjustcolor("grey", 0.5))
+    # points(Cj$SST, Cj$Arag, col=adjustcolor("magenta", 0.3))
+    # points(Bj$SST_sum, Bj$Arag_sum, col="blue", pch=19, cex=2)
+    # points(A$SST_sum[nnd$nn.index], A$Arag_sum[nnd$nn.index], col="black", bg="red", pch=23, cex=2)
+    # xa <- par("usr")[1] + (par("usr")[2]-par("usr")[1])*0.1
+    # ya <- par("usr")[4] - (par("usr")[4]-par("usr")[3])*0.1
+    # text(xa, ya, "D",  cex=2) 
+    # 
+    # plot(c(A$pH_sum,Bj$pH_sum),c(A$Arag_sum,Bj$Arag_sum), xlab="Summer pH", ylab="Summer Aragonite S.S.",
+    #      bty="l", las=1, col=adjustcolor("grey", 0.5))
+    # points(Cj$pH, Cj$Arag, col=adjustcolor("magenta", 0.3))
+    # points(Bj$pH_sum, Bj$Arag_sum, col="blue", pch=19, cex=2)
+    # points(A$pH_sum[nnd$nn.index], A$Arag_sum[nnd$nn.index], col="black", bg="red", pch=23, cex=2)
+    # xa <- par("usr")[1] + (par("usr")[2]-par("usr")[1])*0.1
+    # ya <- par("usr")[4] - (par("usr")[4]-par("usr")[3])*0.1
+    # text(xa, ya, "D",  cex=2) 
+
+    plot(c(A$SST, Bj$SST, Cj$SST),c(A$Arag,Bj$Arag, Cj$Arag), xlab="SST", ylab="Aragonite S.S.",
+          bty="l", las=1, col=adjustcolor("grey", 0.5))
+     points(Cj$SST, Cj$Arag, col=adjustcolor("magenta"))
+     points(Bj$SST, Bj$Arag, col="blue", pch=19, cex=1)
+     points(A$SST[nnd$nn.index], A$Arag[nnd$nn.index], 
+            col=adjustcolor("black",0.8), bg=adjustcolor("green",0.7), pch=23, cex=1)
+     xa <- par("usr")[1] + (par("usr")[2]-par("usr")[1])*0.1
+     ya <- par("usr")[4] - (par("usr")[4]-par("usr")[3])*0.1
+     text(xa, ya, "C",  cex=2)
+    #
+     plot(c(A$pH,Bj$pH, Cj$pH),c(A$Arag,Bj$Arag, Cj$Arag), xlab="pH", ylab="Aragonite S.S.",
+          bty="l", las=1, col=adjustcolor("grey", 0.5))
+     points(Cj$pH, Cj$Arag, col=adjustcolor("magenta"))
+     points(Bj$pH, Bj$Arag, col="blue", pch=19, cex=1)
+     points(A$pH[nnd$nn.index], A$Arag[nnd$nn.index], 
+            col=adjustcolor("black",0.8), bg=adjustcolor("green",0.7), pch=23, cex=1)
+     xa <- par("usr")[1] + (par("usr")[2]-par("usr")[1])*0.1
+     ya <- par("usr")[4] - (par("usr")[4]-par("usr")[3])*0.1
+     text(xa, ya, "D",  cex=2)
     dev.off()
     
     }
     
     #names(NN.station) <- paste0("NN.station",names(NN.station))
     
-    return(data.frame(NN.sigma, NN.Mdist=NN.dist, NN.station))
+    return(data.frame(NN.sigma, NN.station, NN.Mdist=NN.dist, num_PCs=PCs))
 }
 
 
