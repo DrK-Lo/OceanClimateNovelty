@@ -503,40 +503,8 @@ calc_perc(dat_Nov$NN.sigma_2100_8.5_today, "2000 disappearing in 2100 8.5")
 calc_perc(dat_Nov$NN.sigma_today_2100_8.5, "Novel climates in 2100 8.5 since 2000")
 
 # Visualize relationship between sigma_D and M_D
-#### Figure out what is going on ####
 plot(dat_Nov$NN.sigma_today_1800, dat_Nov$NN.Mdist_today_1800)
 plot(dat_Nov$NN.sigma_today_2100_8.5, dat_Nov$NN.Mdist_today_2100_8.5, col=dat_Nov$numPCs_today_2100_8.5)
 legend(0, 15, 1:4, 1:4)
 abline(h=12)
 hist(dat_Nov$numPCs_today_2100_8.5)
-
-A <- norm_2000
-B <- norm_2100_8.5
-
-weird_ind <- which(dat_Nov$NN.sigma_today_2100_8.5> 6 & dat_Nov$NN.sigma_today_2100_8.5 < 8 & 
-                     dat_Nov$NN.Mdist_today_2100_8.5 > 12)
-dat_Nov[weird_ind,]
-hist(dat_Nov$lat[weird_ind])
-plot(dat_Nov$NN.sigma_today_2100_8.5[weird_ind], dat_Nov$NN.Mdist_today_2100_8.5[weird_ind], 
-     col=as.numeric(as.factor(dat_Nov$lat[weird_ind]>50)))
-weird_stations <- dat_Nov$No[weird_ind]
-length(weird_stations)     
-
-dat_Nov_weird <- dat_Nov[weird_ind,]
-dat_Nov_weird %>% filter(NN.Mdist_today_2100_8.5>15) %>% select(No)
-dat_Nov_weird %>% filter(NN.Mdist_today_2100_8.5<13.05) %>% select(No, lat, long)
-#stations to start with in Novelty functions
-
-norm_2000_weird <- norm_2000[norm_2000$No %in% weird_stations,]
-norm_2001_8.5_weird <- norm_2100_8.5[norm_2100_8.5$No %in% weird_stations,]
-
-plot(norm_2000$Arag_sum, norm_2000$Arag_win)
-abline(0,1, col="blue")
-points(norm_2000_weird$Arag_sum, norm_2000_weird$Arag_win, col="red")
-abline(0,1, col="blue")
-
-plot(norm_2000$Arag_sum,  norm_2100_8.5$Arag_sum)
-abline(0,1, col="blue")
-points(norm_2000_weird$Arag_sum, norm_2001_8.5_weird$Arag_sum, col="red")
-
-left_join(norm_2000_weird , dat_Nov$lat)
