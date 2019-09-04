@@ -5,7 +5,7 @@ date: "6/27/2019"
 output: html_document
 ---
   
-setwd("~/Desktop/Repos/OceanClimateNovelty/src")  
+setwd("~/Documents/Github/OceanClimateNovelty/src")  
   
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -16,10 +16,11 @@ source("0-Novelty_Oceans_Functions.R")
 
 ```{r load data}
 
-dat_Nov <- fread("../results/SigmaD.csv")
-dat1 <- fread("/Users/katie/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_1800_2000.txt", sep = ",")
-dat4.5 <- fread("/Users/katie/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_2070_2100_RCP45.txt", sep = ",")
-dat8.5 <- fread("/Users/katie/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_2070_2100_RCP85.txt", sep = ",")
+dat_Nov <- fread("../results_annual/SigmaD.csv")
+dat1 <- fread("/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_1800_2000.txt", sep = ",")
+dat4.5 <- fread("/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_2070_2100_RCP45.txt", sep = ",")
+dat8.5 <- fread("/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_2070_2100_RCP85.txt", sep = ",")
+
 
 ```
 
@@ -47,6 +48,15 @@ x <- seq(ab[1,1], ab[1,2], length.out = nbin[1])
 y <- seq(ab[2,1], ab[2,2], length.out = nbin[2])
 
 thresh <- 1
+
+setup_plot <- function(x){
+  x_yo <- x
+  x_yo[x>1000] <- 4
+  x_yo[x<=1000 & x>100 ] <- 3
+  x_yo[x<=100 & x>1] <- 2
+  return(x_yo)
+}
+  
 ```
 
 ```{r grouping based on climate normals, echo=FALSE, eval=FALSE}
@@ -91,26 +101,26 @@ thresh <- 1
 ## 1800 layer
   y1800 <- bin2(cbind(dat1$SST[dat1$Year<1850], dat1$Arag[dat1$Year<1850]) , ab, nbin)
   z_1800 <- y1800$nc
-  z_1800[z_1800<=thresh] <- 0 # convert to presence/absence
-  z_1800[z_1800>thresh] <- 1 # convert to presence/absence
+  #z_1800[z_1800<=thresh] <- 0 # convert to presence/absence
+  #z_1800[z_1800>thresh] <- 1 # convert to presence/absence
 
 ## 2000 layer
   y2000 <- bin2(cbind(dat1$SST[dat1$Year>1950], dat1$Arag[dat1$Year>1950]) , ab, nbin)
   z_2000 <- y2000$nc
-  z_2000[z_2000<=thresh] <- 0 # convert to presence/absence
-  z_2000[z_2000>thresh] <- 1 # convert to presence/absence
+  #z_2000[z_2000<=thresh] <- 0 # convert to presence/absence
+  #z_2000[z_2000>thresh] <- 1 # convert to presence/absence
  
 ## 2100 layer 8.5
   y2100_8.5 <- bin2(cbind(dat8.5$SST, dat8.5$Arag) , ab, nbin)
   z_2100_8.5 <- y2100_8.5$nc
-  z_2100_8.5[z_2100_8.5<=thresh] <- 0 # convert to presence/absence
-  z_2100_8.5[z_2100_8.5>thresh] <- 1 # convert to presence/absence   
+  #z_2100_8.5[z_2100_8.5<=thresh] <- 0 # convert to presence/absence
+  #z_2100_8.5[z_2100_8.5>thresh] <- 1 # convert to presence/absence   
   
 ## 2100 layer 4.5
   y2100_4.5 <- bin2(cbind(dat4.5$SST, dat4.5$Arag) , ab, nbin)
   z_2100_4.5 <- y2100_4.5$nc
-  z_2100_4.5[z_2100_4.5<=thresh] <- 0 
-  z_2100_4.5[z_2100_4.5>thresh] <- 1 # convert to presence/absence   
+  #z_2100_4.5[z_2100_4.5<=thresh] <- 0 
+  #z_2100_4.5[z_2100_4.5>thresh] <- 1 # convert to presence/absence   
 ```
 
 # Temp vs. pH binning
@@ -127,22 +137,22 @@ yb <- seq(ab2[2,1], ab2[2,2], length.out = nbin[2])
 ## 1800 layer
   y1800 <- bin2(cbind(dat1$SST[dat1$Year<1850], dat1$pH[dat1$Year<1850]) , ab2, nbin)
   z_1800b <- y1800$nc
-  z_1800b[z_1800b>0] <- 1 # convert to presence/absence
+  #z_1800b[z_1800b>0] <- 1 # convert to presence/absence
 
 ## 2000 layer
   y2000 <- bin2(cbind(dat1$SST[dat1$Year>1950], dat1$pH[dat1$Year>1950]) , ab2, nbin)
   z_2000b <- y2000$nc
-  z_2000b[z_2000b>0] <- 1 # convert to presence/absence
+  #z_2000b[z_2000b>0] <- 1 # convert to presence/absence
  
 ## 2100 layer 8.5
   y2100_8.5 <- bin2(cbind(dat8.5$SST, dat8.5$pH) , ab2, nbin)
   z_2100_8.5b <- y2100_8.5$nc
-  z_2100_8.5b[z_2100_8.5b>0] <- 1 # convert to presence/absence   
+  #z_2100_8.5b[z_2100_8.5b>0] <- 1 # convert to presence/absence   
   
 ## 2100 layer 4.5
   y2100_4.5 <- bin2(cbind(dat4.5$SST, dat4.5$pH) , ab2, nbin)
   z_2100_4.5b <- y2100_4.5$nc
-  z_2100_4.5b[z_2100_4.5b>0] <- 1 # convert to presence/absence 
+  #z_2100_4.5b[z_2100_4.5b>0] <- 1 # convert to presence/absence 
   
 ```  
 
@@ -152,15 +162,27 @@ yb <- seq(ab2[2,1], ab2[2,2], length.out = nbin[2])
 pdf("../figures/TempVsOmega2vspH.pdf", width=8, height=7)  
 par(mar=c(2,2,0.5,0.5), mfrow=c(2,2), oma=c(2,2,0.5,0.5))  
 # 1800 to 2000  
+
+  get_cols <- function(string){
+    c(rgb(0,0,0,0), 
+      adjustcolor(string,0.2),
+      adjustcolor(string,0.4),
+      adjustcolor(string,0.6),
+      adjustcolor(string,0.8)
+      )
+  }
+  get_cols("dodgerblue4")
   
-  image(x, y, z_1800, col=c("white", adjustcolor("dodgerblue4",0.8)),
+  image(x, y, setup_plot(z_1800), col=get_cols("blue"),
         xlab="Temperature (C)",
         ylab="Aragonite Saturatation State",
         bty="l",
         xlim=c(-5, 60),
-        las=1
-        )
-  image(x, y, z_2000, add=TRUE, col=c(rgb(0,0,0,0), adjustcolor("goldenrod", 0.8)))
+        las=1)
+  image(x, y, setup_plot(z_2000), add=TRUE, col=get_cols("goldenrod"))
+  contour(x,y, setup_plot(z_1800), nlevels=2, add=TRUE, col=get_cols("blue")[c(4,2)], drawlabels=FALSE)
+  contour(x,y, setup_plot(z_2000), nlevels=2, add=TRUE, col=get_cols("goldenrod")[c(5,3)], drawlabels=FALSE)
+  
   text(0, 11, "A", cex=2)
   text(20, 7.5, "1800 disappearing in 2000", col="dodgerblue4")  
   lines(c(20,25), c(7, 4.6), lwd=3, col="dodgerblue4")
@@ -169,41 +191,45 @@ par(mar=c(2,2,0.5,0.5), mfrow=c(2,2), oma=c(2,2,0.5,0.5))
   text(30, 2.0, "Novel in 2000", col="goldenrod4", adj=0)  
   lines(c(29,28), c(2.0, 3.0), lwd=3, col="goldenrod4")
   lines(c(29,17), c(2.0, 1.9), lwd=3, col="goldenrod4")
-  legend(40, 12, c("1800", "2000"), fill=c(adjustcolor("dodgerblue4", 0.8), 
+  legend(40, 12, c("1800", "2000"), fill=c(adjustcolor("blue", 0.8), 
       adjustcolor("goldenrod", 0.8)), bty="n", adj=0, cex=1.5)
   mtext("Aragonite Saturation State", side=2, outer=TRUE, adj=0.95, cex=1.4)
     
 # 2000 to 2100_8.5  
-  image(x, y, z_2000, col=c(rgb(0,0,0,0), adjustcolor("goldenrod", 0.8)),
-        xlab="Temperature (C)",
+  image(x, y, setup_plot(z_2000), col=get_cols("goldenrod"),
+      xlab="Temperature (C)",
         ylab="",
         bty="l",
         xlim=c(-5, 60),
         las=1
         )
-  image(x, y, z_2100_8.5, add=TRUE, col=c(rgb(0,0,0,0), adjustcolor("darkmagenta", 0.5)))
+  image(x, y, setup_plot(z_2100_8.5), add=TRUE, col=get_cols("darkmagenta"))
+  contour(x,y, setup_plot(z_2100_8.5), nlevels=2, add=TRUE, col=get_cols("darkmagenta")[c(4,2)], drawlabels=FALSE)
+  contour(x,y, setup_plot(z_2000), nlevels=2, add=TRUE, col=get_cols("goldenrod")[c(5,3)], drawlabels=FALSE)
   text(20, 6.5, "2000 disappearing in\n2100 RCP 8.5", col="goldenrod4")  
   text(0, 11, "B", cex=2)
-  lines(c(20,20), c(5.5, 3), lwd=3, col="goldenrod4")
-  lines(c(20,10), c(5.5, 2), lwd=3, col="goldenrod4")
+  lines(c(20,20), c(5.5, 3.2), lwd=3, col="goldenrod4")
+  lines(c(20,10), c(5.5, 2.2), lwd=3, col="goldenrod4")
   abline(1,0, lty=2, col=rgb(0,0,0,0.7))
   text(36, 2, "Novel in 2100\nRCP 8.5", col="darkmagenta", adj=0)  
   lines(c(35,32), c(2, 2.5), lwd=3, col="darkmagenta")
   lines(c(35,24), c(2, 1.9), lwd=3, col="darkmagenta")
   legend(40, 12, c("2000", "2100"), fill=c(adjustcolor("goldenrod", 0.8), 
-         adjustcolor("darkmagenta", 0.5)), bty="n", adj=0, cex=1.5)
+         adjustcolor("darkmagenta", 0.8)), bty="n", adj=0, cex=1.5)
 
 ### PH ######
 # 1800 to 2000  PH
-  image(xb, yb, z_1800b, col=c("white", adjustcolor("dodgerblue4",0.8)),
+  image(xb, yb, setup_plot(z_1800b), col=get_cols("blue"),
         xlab="Temperature (C)",
         ylab="pH",
         bty="l",
         xlim=c(-5, 60),
         las=1
         )
-  image(xb, yb, z_2000b, add=TRUE, col=c(rgb(0,0,0,0), adjustcolor("goldenrod", 0.8)))
-  text(0, 11, "C", cex=2)
+  image(xb, yb,setup_plot(z_2000b), add=TRUE, col=get_cols("goldenrod"))
+  contour(xb,yb, setup_plot(z_1800b), nlevels=2, add=TRUE, col=get_cols("blue")[c(4,2)], drawlabels=FALSE)
+  contour(xb,yb, setup_plot(z_2000b), nlevels=2, add=TRUE, col=get_cols("goldenrod")[c(5,3)], drawlabels=FALSE)
+  text(0, 8.9, "C", cex=2)
   #text(20, 7.5, "1800 disappearing in 2000", col="dodgerblue4")  
   #lines(c(20,25), c(7, 4.6), lwd=3, col="dodgerblue4")
   #lines(c(20,5.3), c(7, 4.1), lwd=3, col="dodgerblue4")
@@ -216,16 +242,18 @@ par(mar=c(2,2,0.5,0.5), mfrow=c(2,2), oma=c(2,2,0.5,0.5))
   mtext("pH", side=2, outer=TRUE, adj=0.25,  cex=1.5, line=0)
     
 # 2000 to 2100_8.5  PH
-  image(xb, yb, z_2000b, col=c(rgb(0,0,0,0), adjustcolor("goldenrod", 0.8)),
+  image(xb, yb, setup_plot(z_2000b), col=get_cols("goldenrod"),
         xlab="Temperature (C)",
         ylab="",
         bty="l",
         xlim=c(-5, 60),
         las=1
         )
-  image(xb, yb, z_2100_8.5b, add=TRUE, col=c(rgb(0,0,0,0), adjustcolor("darkmagenta", 0.5)))
+  image(xb, yb, setup_plot(z_2100_8.5b), add=TRUE, col=get_cols("darkmagenta"))
+  contour(xb,yb, setup_plot(z_2100_8.5b), nlevels=2, add=TRUE, col=get_cols("darkmagenta")[c(4,2)], drawlabels=FALSE)
+  contour(xb,yb, setup_plot(z_2000b), nlevels=2, add=TRUE, col=get_cols("goldenrod")[c(5,3)], drawlabels=FALSE)
   #text(20, 6.5, "2000 disappearing in\n2100 RCP 8.5", col="goldenrod4")  
-  text(0, 11, "D", cex=2)
+  text(0, 8.9, "D", cex=2)
   #lines(c(20,20), c(5.5, 3), lwd=3, col="goldenrod4")
   #lines(c(20,10), c(5.5, 2), lwd=3, col="goldenrod4")
   #abline(1,0, lty=2, col=rgb(0,0,0,0.7))
@@ -238,20 +266,6 @@ par(mar=c(2,2,0.5,0.5), mfrow=c(2,2), oma=c(2,2,0.5,0.5))
 dev.off()  
 ```
 
-```{r}
-# 2000 to 2100_4.5  
-par(mar=c(4,4,0.5,0.5), mfrow=c(1,1), oma=c(0,0,0.5,0.5))  
-  image(x, y, z_2000, col=c(rgb(0,0,0,0), adjustcolor("goldenrod", 0.8)),
-        xlab="Temperature (C)",
-        ylab="Aragonite Saturatation State",
-        bty="l",
-        xlim=c(-5, 60),
-        las=1
-        )
-  image(x, y, z_2100_4.5, add=TRUE, col=c(rgb(0,0,0,0), adjustcolor("darkorange", 0.5)))
-  legend(30, 12, c("2000", "2100\nRCP 4.5"), fill=c(adjustcolor("goldenrod", 0.8), 
-         adjustcolor("darkorange", 0.5)), bty="n", adj=0)
-```
 
 ## Visualize pH, temp, and Arag
 ```{r}
@@ -284,44 +298,6 @@ dev.off()
 dat_2000 %>% filter(pH<7.8) %>% select(Lat) %>% summary
 ```
 
-## Other plotting not used in manuscript
-
-```{r, try to plot reason why non-inutitive result}
-head(dat1norm_2000)
-par(mfrow=c(1,1))
-plot(dat1norm_2000$Lon, dat1norm_2000$Lat)
-
-# Choose a site in the N. Pacific ~45 degrees N
-# with a low degree of novelty but a high
-# degree of disappearance
-head(dat_Nov)
-my_spot <- dat_Nov %>% filter(long==199.5 & lat==46.5) %>% 
-  select(No, lat, long, NN.sigma_today_2100_8.5, NN.station_today_2100_8.5, lat_today_2100_8.5, long_today_2100_8.5, NN.sigma_2100_8.5_today, NN.station_2100_8.5_today, lat_2100_8.5_today, long_2100_8.5_today)
-
-dat_Nov %>% filter(long==199.5 & lat==0.5) %>% 
-  select(No, lat, long, NN.sigma_today_2100_8.5, NN.station_today_2100_8.5, lat_today_2100_8.5, long_today_2100_8.5, NN.sigma_2100_8.5_today, NN.station_2100_8.5_today, lat_2100_8.5_today, long_2100_8.5_today)
-
-my_spot
-# NN.sigma_today_2100_8.5 today baseline, degree of novelty for this location
-# NN.station_today_2100_8.5 today baseline, location of nearest neighbor in today's data for the future climate of this location
-# lat_today_2100_8.5, long_today_2100_8.5
-
-# NN.sigma_2100_8.5_today future baseline, degree of disappearance for today's climate
-# NN.station_2100_8.5_today, lat_2100_8.5_today, long_2100_8.5_today future baseline, location of nearest neighbor in future data for this location
-
-(today_myspot <- dat1 %>% filter(No==my_spot$No & Year>1950 & Month>=6 & Month <=8) %>% summarise_each(mean))
-#   No   Lon  Lat Year Month      SST     Arag       pH
-# 1 18952 199.5 46.5 1985     7 10.77055 2.070625 8.082542
-
-(future_myspot <- dat8.5 %>% filter(No==my_spot$No &  Month>=6 & Month <=8) %>% summarise_each(mean))
-(novelty_nn <- dat1 %>% filter(No==my_spot$NN.station_today_2100_8.5& Year>1950 & Month>=6 & Month <=8) %>% summarise_each(mean))
-  # This should be close to future_myspot
-
-(today_myspot <- dat1norm_2000 %>% filter(No==my_spot$No))
-(disappear_nn <- dat1norm_8.5 %>% filter(No==my_spot$NN.station_2100_8.5_today))
-  # This (should) be close to today_myspot
-  
-```
 
 ## Subset to specific places on map:
 
@@ -369,34 +345,25 @@ PlotEnvel <- function(datf, col2){
 ```{r}
 ## Plot climate envelopes for specific regions
 plot(c(-5, 40), c(0, 12), type="n")
-plot(c(-5, 15), c(0, 4), type="n")
 IndoPac_2000 <- dat1 %>% filter(Lon<200 & Lon>50 & abs(Lat) < 25 & Year > 1950 & Year < 2010)
 PlotEnvel(IndoPac_2000, "darkgreen")
 IndoPac_2100_8.5 <- dat8.5 %>% filter(Lon<200 & Lon>50 & 
   abs(Lat) < 25)
 PlotEnvel(IndoPac_2100_8.5, adjustcolor("darkgreen", 0.5))
 
+```
+
+```{r}
+
+plot(c(-5, 15), c(0, 4), type="n")
 Art_2000 <- dat1 %>% filter(Lat > 66.5 & Year > 1950 & Year < 2010)
 PlotEnvel(Art_2000, adjustcolor("red", 0.6))
 Art_2100_8.5 <- dat8.5 %>% filter(Lat > 66.5)
-#PlotEnvel(Art_2100_8.5, adjustcolor("red", 0.3))
+PlotEnvel(Art_2100_8.5, adjustcolor("red", 0.3))
 
 Ant_2000 <- dat1 %>% filter(Lat < -66.5 & Year > 1950 & Year < 2010)
 PlotEnvel(Ant_2000, adjustcolor("blue", 0.7))
 Ant_2100_8.5 <- dat8.5 %>% filter(Lat < -66.5)
 PlotEnvel(Ant_2100_8.5, adjustcolor("yellow", 0.5))
-
-```
-
-```{r}
-plotenv_SST_Arag<- function(d, ...){
-  x1 <- c(d[1,1], d[1,1], d[3,1], d[3,1])
-  y1 <- c(d[2,1], d[2,3], d[2,3], d[2,1])
-  polygon(x1, y1, ...)
-}
-
-# Plot climate envelopes
-
-plotenv_SST_Arag(mean_IndoPac_2000)
 
 ```
