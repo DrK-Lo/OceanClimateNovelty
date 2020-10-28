@@ -52,8 +52,8 @@ thresh <- 1
 setup_plot <- function(x){
   x_yo <- x
   x_yo[x>1000] <- 4
-  x_yo[x<=1000 & x>100 ] <- 3
-  x_yo[x<=100 & x>1] <- 2
+  x_yo[x<=1000  & x>1] <- 2
+  #x_yo[x<=100 & x>1] <- 2
   return(x_yo)
 }
   
@@ -165,10 +165,10 @@ par(mar=c(2,2,0.5,0.5), mfrow=c(2,2), oma=c(2,2,0.5,0.5))
 
   get_cols <- function(string){
     c(rgb(0,0,0,0), 
+ #     adjustcolor(string,0.2),
+#      adjustcolor(string,0.4),
       adjustcolor(string,0.2),
-      adjustcolor(string,0.4),
-      adjustcolor(string,0.6),
-      adjustcolor(string,0.8)
+      adjustcolor(string,0.6)
       )
   }
   get_cols("dodgerblue4")
@@ -180,8 +180,8 @@ par(mar=c(2,2,0.5,0.5), mfrow=c(2,2), oma=c(2,2,0.5,0.5))
         xlim=c(-5, 60),
         las=1)
   image(x, y, setup_plot(z_2000), add=TRUE, col=get_cols("goldenrod"))
-  contour(x,y, setup_plot(z_1800), nlevels=2, add=TRUE, col=get_cols("blue")[c(4,2)], drawlabels=FALSE)
-  contour(x,y, setup_plot(z_2000), nlevels=2, add=TRUE, col=get_cols("goldenrod")[c(5,3)], drawlabels=FALSE)
+  contour(x,y, setup_plot(z_1800), nlevels=2, add=TRUE, col=c(rgb(0,0,0,0),"blue"), drawlabels=FALSE)
+  contour(x,y, setup_plot(z_2000), nlevels=2, add=TRUE, col=c(rgb(0,0,0,0),"goldenrod"), drawlabels=FALSE)
   
   text(0, 11, "A", cex=2)
   text(20, 7.5, "1800 disappearing in 2000", col="dodgerblue4")  
@@ -204,8 +204,8 @@ par(mar=c(2,2,0.5,0.5), mfrow=c(2,2), oma=c(2,2,0.5,0.5))
         las=1
         )
   image(x, y, setup_plot(z_2100_8.5), add=TRUE, col=get_cols("darkmagenta"))
-  contour(x,y, setup_plot(z_2100_8.5), nlevels=2, add=TRUE, col=get_cols("darkmagenta")[c(4,2)], drawlabels=FALSE)
-  contour(x,y, setup_plot(z_2000), nlevels=2, add=TRUE, col=get_cols("goldenrod")[c(5,3)], drawlabels=FALSE)
+  contour(x,y, setup_plot(z_2100_8.5), nlevels=2, add=TRUE, col=c(rgb(0,0,0,0),"darkmagenta"), drawlabels=FALSE)
+  contour(x,y, setup_plot(z_2000), nlevels=2, add=TRUE, col=c(rgb(0,0,0,0),"goldenrod"), drawlabels=FALSE)
   text(20, 6.5, "2000 disappearing in\n2100 RCP 8.5", col="goldenrod4")  
   text(0, 11, "B", cex=2)
   lines(c(20,20), c(5.5, 3.2), lwd=3, col="goldenrod4")
@@ -227,8 +227,8 @@ par(mar=c(2,2,0.5,0.5), mfrow=c(2,2), oma=c(2,2,0.5,0.5))
         las=1
         )
   image(xb, yb,setup_plot(z_2000b), add=TRUE, col=get_cols("goldenrod"))
-  contour(xb,yb, setup_plot(z_1800b), nlevels=2, add=TRUE, col=get_cols("blue")[c(4,2)], drawlabels=FALSE)
-  contour(xb,yb, setup_plot(z_2000b), nlevels=2, add=TRUE, col=get_cols("goldenrod")[c(5,3)], drawlabels=FALSE)
+  contour(xb,yb, setup_plot(z_1800b), nlevels=2, add=TRUE, col=c(rgb(0,0,0,0),"blue"), drawlabels=FALSE)
+  contour(xb,yb, setup_plot(z_2000b), nlevels=2, add=TRUE, col=c(rgb(0,0,0,0),"goldenrod"), drawlabels=FALSE)
   text(0, 8.9, "C", cex=2)
   #text(20, 7.5, "1800 disappearing in 2000", col="dodgerblue4")  
   #lines(c(20,25), c(7, 4.6), lwd=3, col="dodgerblue4")
@@ -250,10 +250,12 @@ par(mar=c(2,2,0.5,0.5), mfrow=c(2,2), oma=c(2,2,0.5,0.5))
         las=1
         )
   image(xb, yb, setup_plot(z_2100_8.5b), add=TRUE, col=get_cols("darkmagenta"))
-  contour(xb,yb, setup_plot(z_2100_8.5b), nlevels=2, add=TRUE, col=get_cols("darkmagenta")[c(4,2)], drawlabels=FALSE)
-  contour(xb,yb, setup_plot(z_2000b), nlevels=2, add=TRUE, col=get_cols("goldenrod")[c(5,3)], drawlabels=FALSE)
+  contour(xb,yb, setup_plot(z_2100_8.5b), nlevels=2, add=TRUE, col=c(rgb(0,0,0,0),"darkmagenta"), drawlabels=FALSE)
+  contour(xb,yb, setup_plot(z_2000b), nlevels=2, add=TRUE, col=c(rgb(0,0,0,0),"goldenrod"), drawlabels=FALSE)
   #text(20, 6.5, "2000 disappearing in\n2100 RCP 8.5", col="goldenrod4")  
   text(0, 8.9, "D", cex=2)
+  arrows(x0=29, x1=2, y0=8.5, y1=7.8, lwd=2, col="black")
+  text(30,8.5,"Not novel\nin 2100 RCP 8.5", cex=1, adj=0)
   #lines(c(20,20), c(5.5, 3), lwd=3, col="goldenrod4")
   #lines(c(20,10), c(5.5, 2), lwd=3, col="goldenrod4")
   #abline(1,0, lty=2, col=rgb(0,0,0,0.7))

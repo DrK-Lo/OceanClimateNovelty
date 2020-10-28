@@ -111,9 +111,15 @@ calculate_normals_annual <- function(dat1){
 #--------------------------------  
 ### Calculate Sigma Dissimilarity ####
 #--------------------------------
-#initiate the data frame to store the projected sigma dissimilarity of best analogs for each grid cell. 
+#initiate the data frame to store the projected sigma dissimilarity of 
+# best analogs for each grid cell. 
 
 loop_sigma_D <- function(A, B, C, append="", makePlot=FALSE){
+  # A is baseline, the base that a station from B is compared to
+  # If A is past and B is future, then degree of novelty
+  # If A is future and B is past, then degree of disappearance
+  # B will be subset to a particular station for analysis
+  # C is the data frame used to calculate the ICV, will also be subset to a particular station for analysis
   if(!identical(A$No, B$No)){print("Error"); break}
   
   NN.sigma <- data.frame(No=A$No, NN.sigma=NA, NN.station=NA, NN.Mdist=NA, numPCs=NA)

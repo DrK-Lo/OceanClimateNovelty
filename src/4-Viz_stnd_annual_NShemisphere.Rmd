@@ -1,0 +1,273 @@
+---
+title: "NS Hemisphere Visualizations"
+author: "KE Lotterhos"
+date: "10/27/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(FNN)
+library(ggplot2)
+source("0-Novelty_Oceans_Functions.R")
+
+code_dir <- "/Users/lotterhos/Documents/GitHub/OceanClimateNovelty/src/"
+
+results_dir <- "/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Results/HemisphereRestricted/"
+
+data_dir <- "/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Data/"
+
+
+setwd(code_dir)
+```
+
+
+1. upload MPA locations
+2. link MPA locations to grid cells on globe
+```{r}
+MPAs <- read.csv(paste0(data_dir, "notakeonly_coord.csv"))
+head(MPAs)
+tail(MPAs)
+plot(MPAs$Centroid_Longitude, MPAs$Centroid_Latitude)
+
+# Transform longitude from MPAs
+MPAs$Centroid_Longitude_trans <- MPAs$Centroid_Longitude
+MPAs$Centroid_Longitude_trans[which(MPAs$Centroid_Longitude<0)] <- 360 + MPAs$Centroid_Longitude[which(MPAs$Centroid_Longitude<0)]
+
+
+dfresults <- read.csv(paste0(results_dir,"SigmaD_Hem.csv"))
+dfresults <- dfresults[order(dfresults$No),]
+head(dfresults)
+tail(dfresults)
+
+ ggplot()+
+    geom_polygon(data = world, aes(x=long, y = lat, group=group)) + geom_point(data = MPAs, aes(x= (Centroid_Longitude_trans), y = Centroid_Latitude)) + 
+   stat_summary_2d(data=dfresults, aes(x=long, y = lat, z= NN.sigma_today_2100_4.5), bins=80, alpha = 0.8)
+
+# Transform longitude from this analysis
+dfresults$long_trans <- dfresults$long
+dfresults$long_trans[which(dfresults$long>360)] <- dfresults$long[which(dfresults$long>360)] - 360
+  # 380 should correspond to 20; 360 corresponds to 0
+
+ ggplot()+
+    geom_polygon(data = world, aes(x=long, y = lat, group=group)) + geom_point(data = MPAs, aes(x= (Centroid_Longitude_trans), y = Centroid_Latitude)) + 
+   stat_summary_2d(data=dfresults, aes(x=long_trans, y = lat, z= NN.sigma_today_2100_4.5), bins=80, alpha = 0.8)
+
+
+summary(MPAs$Centroid_Longitude) # - 180 to 180
+summary(dfresults$long) # 20 to 380
+
+dfresults$MPA_nnIndex <- NA
+dfresults$MPA <- FALSE
+dfresults$MPA_nnDist <- NA
+MPAs$No <- NA
+
+for (i in 1:nrow(MPAs)){
+  q <- as.matrix(cbind(MPAs$Centroid_Latitude[i], MPAs$Centroid_Longitude_trans[i])) # lat, long
+  
+  d <- as.matrix(dfresults[,c("lat", "long_trans")])
+  nn <- get.knnx(d, q, k=1)
+  
+  MPAs$No[i] <- nn$nn.index
+  MPAs$nnDist[i] <- nn$nn.dist
+  MPAs$No_lat[i] <- dfresults$lat[nn$nn.index]
+  MPAs$No_long_trans[i] <- dfresults$long_trans[nn$nn.index]
+  #q
+  #dfresults[nn$nn.index,c("lat", "long")]
+  
+  if(nn$nn.dist < 0.9){ # only include if station is close
+    dfresults$MPA_nnDist[nn$nn.index] <- nn$nn.dist
+    dfresults$MPA_nnIndex[nn$nn.index] <- nn$nn.index
+    dfresults$MPA[nn$nn.index] <- TRUE
+    }
+}
+
+# total number of MPAs included
+length(which(MPAs$nnDist<0.9))
+
+# number of stations representing MPAs
+sum(!is.na(dfresults$MPA_nnIndex))
+
+table(MPAs$No[which(MPAs$nnDist<0.9)])
+  #This should sum to 177
+sum(table(MPAs$No[which(MPAs$nnDist<0.9)]))
+  
+hist(dfresults$MPA_nnDist)
+```
+
+
+3. look at degree of novelty for MPAs relative to non-MPA sites
+```{r}
+ggplot(dfresults, aes(NN.sigma_today_2100_4.5,
+                      fill = MPA)) + 
+  geom_density(color="#e9ecef", alpha=0.3, position = 'identity') + theme_classic()
+
+ggplot(dfresults, aes(NN.sigma_today_2100_8.5,
+                      fill = MPA)) + 
+  geom_density(color="#e9ecef", alpha=0.3, position = 'identity') + theme_classic()
+```
+
+4. make arrow plots from 1800 to today to 2100 for MPAs
+
+To Do 2:
+1. Create fake environment envelope
+2. Create fake locations with high ICV and different degrees of novelty
+3. Create fake locations with low ICV and different degrees of novelty
+4. Visualize 
+
+# Visualize arrows
+
+
+
+There is a confusing issue with this MPA analysis. I can't just take the MPA column from dfresults and have it make sense all the time.
+
+the 1800_today analysis takes a site today (given by lat,long) and compares it to the 1800 baseline. The NN in the 1800 baseline is lat_1800_today, long_1800_today. So if I want to draw an arrow *from* where a climate was in 1800 *to* where it is today today, I would draw from `lat_1800_today` to `lat`
+
+the today_2100 analysis takes a site in 2100 (given by lat, long) and compares it to a today baseline. The NN in the today baseline is lat_today_2100, long_today_2100. 
+So if I want to draw an arrow *from* where a climate is today in today's baseline *to* where it will be in 2100, I would draw from `lat_today_2100` to `lat`
+
+
+```{r}
+
+ggplot() +
+    geom_polygon(data = world, aes(x=long, y = lat, group=group)) + 
+  # Plot from 1800 to location today
+  # Arrows point from 1800 climate to MPA today
+  geom_segment(data = dfresults[dfresults$MPA,],
+               aes(x = long_1800_today, 
+                   y = lat_1800_today, 
+                    xend = long, yend = lat, 
+                    colour = NN.sigma_1800_today), 
+                 arrow = arrow(length = unit(0.1,"cm")))
+
+ggplot() +
+    geom_polygon(data = world, aes(x=long, y = lat, group=group)) + 
+  # Plot from today to 2100 4.5
+  # In 2100, what is the nearest neighbor today?
+  # Arrow points from today's environment (long_today_2100_4.5) to the MPA in the future (long)
+    geom_segment(data = dfresults[dfresults$MPA,],
+               aes(xend = long, 
+                   yend = lat, 
+                  x = long_today_2100_4.5, 
+                   y = lat_today_2100_4.5, 
+                    colour = NN.sigma_today_2100_4.5), 
+                 arrow = arrow(length = unit(0.2,"cm"))) 
+
+ggplot() +
+    geom_polygon(data = world, aes(x=long, y = lat, group=group)) + 
+  # Plot from today to 2100 8.5
+    geom_segment(data = dfresults[dfresults$MPA,],
+               aes(xend = long, 
+                   yend = lat, 
+                  x = long_today_2100_8.5, 
+                   y = lat_today_2100_8.5, 
+                    colour = NN.sigma_today_2100_8.5), 
+                 arrow = arrow(length = unit(0.2,"cm"))) 
+
+```
+
+# Compare latitudes
+
+```{r}
+
+poly <- data.frame(y=c(-90,90,90, -90, -90), x=c(-90,90,0,0,-90))
+
+
+# If we consider a location in 2000 (lat), where is it's nearest neighbor 1800? (lat_1800_today)?
+ggplot(dfresults) + geom_polygon(data=poly,aes(x,y), fill=adjustcolor("orange", 0.3)) +
+   geom_point(aes(y=lat, x=lat_1800_today,
+                                    color=NN.sigma_1800_today), alpha=0.2) +  
+  scale_color_gradient2(low="red", high="blue", mid="grey", limits=c(0,8)) +
+  theme_classic() + ylab("Latitude in 2000") +
+  xlab("Latitude of nearest neighbor in 1800") + geom_abline(intercept=0,slope=1) 
+
+# 2000 to 2100
+# If we consider a location in 2100, where was the climate it came from in 2000?
+ggplot(dfresults) +  geom_polygon(data=poly,aes(x,y), fill=adjustcolor("orange", 0.3)) +
+  geom_point(aes(y=lat, x=lat_today_2100_4.5,
+                 color=NN.sigma_today_2100_4.5), 
+             alpha=0.2) +
+  scale_color_gradient2(low="red", 
+                        high="blue", mid="grey", limits=c(0,8)) +
+  theme_classic() + ylab("Latitude in 2100 RCP 4.5") +
+  xlab("Latitude of nearest neighbor in 2000") + geom_abline(intercept=0,slope=1) 
+
+ggplot(dfresults) + geom_polygon(data=poly,aes(x,y), fill=adjustcolor("orange", 0.3)) +
+  geom_point(aes(y=lat, x=lat_today_2100_8.5,
+                 color=NN.sigma_today_2100_8.5), 
+             alpha=0.2) +
+  scale_color_gradient2(low="red", 
+                        high="blue", mid="grey", limits=c(0,8)) +
+  theme_classic() + ylab("Latitude in 2100 RCP 8.5") +
+  xlab("Latitude of nearest neighbor in 2000") + geom_abline(intercept=0,slope=1) 
+```
+
+# Latitudinal shifts
+```{r}
+
+
+## Future latitude - past latitude
+## 1800 to today
+## "lat" is latitude of query in 2000
+## lat_1800 is latitude of NN in 1800
+dfresults$latshift_1800_today <- NA
+condN <- which(dfresults$lat>0)
+dfresults$latshift_1800_today[condN] <- dfresults$lat[condN] - dfresults$lat_1800_today[condN]
+  # If 50 degrees in 1800 moved to 90 degrees in 2100 this
+  # would give 90-50 = 40
+  
+condS <- which(dfresults$lat<=0)
+dfresults$latshift_1800_today[condS] <- -1*(dfresults$lat[condS]-dfresults$lat_1800_today[condS])
+  # If -50 degrees in 1800 moved to -90 degrees in 2100 this
+  # would give -1*(-90--50) = 40
+
+
+## Today to 2100 RCP 4.5
+## Future latitude - past latitude
+dfresults$latshift_today_2100_4.5 <- NA
+dfresults$latshift_today_2100_4.5[condN] <- dfresults$lat[condN] - dfresults$lat_today_2100_4.5[condN]  
+dfresults$latshift_today_2100_4.5[condS] <- -1*(dfresults$lat[condS] - dfresults$lat_today_2100_4.5[condS])
+
+## Today to 2100 RCP 8.5
+dfresults$latshift_today_2100_8.5 <- NA
+dfresults$latshift_today_2100_8.5[condN] <- dfresults$lat[condN] - dfresults$lat_today_2100_8.5[condN]
+dfresults$latshift_today_2100_8.5[condS] <- -1*( dfresults$lat[condS] - dfresults$lat_today_2100_8.5[condS])
+
+
+par(mar=c(4,4,1,1), mfrow=c(3,1))
+hist(dfresults$latshift_1800_today, col=adjustcolor("blue", 0.5), main="", xlab="Poleward shift from\nneareast neighbor in the past", breaks=seq(-90, 90, 1), xlim=c(-90,90))
+
+hist(dfresults$latshift_today_2100_4.5, 
+     col=adjustcolor("red", 0.2), main="", xlab="", 
+     breaks=seq(-90, 90, 1), xlim=c(-90,90))
+
+hist(dfresults$latshift_today_2100_8.5, 
+     col=adjustcolor("green", 0.2), main="", xlab="",, 
+     breaks=seq(-90, 90, 1), xlim=c(-90,90))
+
+# color scale: if use "lat" it is the latitude in the later time
+# color scale: if use "lat_1800_today" it is the latitude in the earlier time
+# the x-axis is the shift of the latitude to that location
+ggplot(dfresults) + geom_point(aes(x=latshift_1800_today, y = NN.sigma_1800_today, colour = lat), alpha=0.1)
+
+ggplot(dfresults[dfresults$lat_1800_today>85,]) + geom_point(aes(x=latshift_1800_today, y = NN.sigma_1800_today, colour = lat), alpha=0.1)
+# high latitudes in 1800 can only stay in the same place or move southward - color is latitude in 2000
+
+ggplot(dfresults[dfresults$lat_1800_today>70 & dfresults$lat_1800_today<85,]) + geom_point(aes(x=latshift_1800_today, y = NN.sigma_1800_today, colour = lat), alpha=0.1)
+
+ggplot(dfresults[dfresults$lat_1800_today<60 & dfresults$lat_1800_today>40,]) + geom_point(aes(x=latshift_1800_today, y = NN.sigma_1800_today, colour = lat_1800_today), alpha=0.1)
+# 40-60 degress latitude in 1800 more northward
+
+
+ggplot(dfresults) + geom_point(aes(x=latshift_today_2100_4.5, y = NN.sigma_today_2100_4.5, colour = lat_today_2100_4.5), alpha=0.1)
+# colored by latitude in 2000, shows which way it shifted
+
+ggplot(dfresults) + geom_point(aes(x=latshift_today_2100_8.5, y = NN.sigma_today_2100_8.5, colour = lat_today_2100_4.5), alpha=0.1)
+
+# The RCP 8.5 shows that there aren't a lot of poleward shifts - because climates are so novel, the NN calculation becomes meaningless
+
+# I wonder if some of the really negative latitudinal shifts are driven by distortion of the PC axes caused by the data not being multivariate normal.
+```
