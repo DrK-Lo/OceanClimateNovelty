@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(clusterGeneration)
 ```
 
 ## R Markdown
@@ -20,54 +21,11 @@ source("0-Novelty_Oceans_Functions.R")
 ```
 
 
-```{r}
-library(clusterGeneration)
-cov <- matrix(c(1,0.8,0.8,2), nrow=2)
-
-set.seed(23428)
-cov1 <- genPositiveDefMat(2,covMethod="unifcorrmat" )
-cov1
-base <- data.frame(No = 1:5000, X1 = NA, X2=NA)
-base[,2:3] <- data.frame(mvrnorm(5000, mu=c(0,0), Sigma=cov1$Sigma))
-head(base)
-
-head(base)
-
-site1_future <- data.frame( No=1, X1=5, X2=-5)
-site1_future
-cov <- cov1$Sigma/50
-  # divide by 5 gives NN.sigma of 2.8
-  # Divide by 2 gives NN.sigma of 1.5
-  # divide by 10 gives NN.sigma of 4.2
-  # divdie by 20 gives NN.sigma of 3.5
-  # divide by 50 gives 5.8
-set.seed(913234)
-site1_climate <- mvrnorm(100, mu=as.numeric(site1_future[1,2:3]), Sigma=cov)
-head(site1_climate)
-site1_ICV <- data.frame(No=1,
-                        X1=site1_climate[,1] - site1_future[1,2], 
-                        X2=site1_climate[,2] - site1_future[1,3]
-                        )
-plot(site1_climate[,2], site1_ICV[,3]) # should be 1:1 line
-
-par(mfrow=c(1,1))
-plot(base[,2], base[,3]
-                    , xlim=c(-10, 10), ylim=c(-10,10))
-points(site1_climate, col="pink")
-points(site1_ICV[,2:3], col="pink")
-```
-
-```{r}
-
-site1_ICV <- data.frame(No=1,
-                        X1=site1_climate[,1],
-                        X2=site1_climate[,2] 
-                        )
-
-A <- base
-B <- site1_future
-C <- site1_ICV
-whichStation=1
+```{r, functions}
+#A <- base
+#B <- site1_future
+#C <- site1_ICV
+#whichStation=1
 
 sigmaDmakeplot <- function(A, B, C, whichStation){
 C.id <- C$No
@@ -161,7 +119,26 @@ C.id <- C$No
     # plot first and second PC
     x <- c(X.prime[,1], Yj.prime[1,1], Zj.prime[,1])
     y <- c(X.prime[,2], Yj.prime[1,2], Zj.prime[,2])
+  
+    ###################
+    # normal plot ####
+    plot(A[,2], A[,3], col=adjustcolor("grey", 0.5), bty="l",
+         las=1,
+         xlab="Climate variable X1", ylab="Climate variable X2", ylim=c(-8, 8))
+    cond1 <- A[,2]<0 & A[,3]<0
+    cond2 <- A[,2]>0 & A[,3]>0
+    points(A[cond1,2], A[cond1,3], col=NA, bg=adjustcolor("darkgrey", 0.5), pch=21)
+    points(A[cond2,2], A[cond2,3], col=adjustcolor("grey",0.5), bg=adjustcolor("lightgrey", 0.5), pch=21)
     
+      # base
+    points(C[,2], C[,3], col=adjustcolor("magenta", 0.3))
+      # ICV
+    points(B[,2], B[,3], col="blue", pch=19)
+      # focal station
+    points(A[nnd$nn.index, 2], A[nnd$nn.index,3], col="black", bg="green", pch=23)
+    #################### 
+  
+    ## PC-rotated plot ####
     plot(x, y,
          xlab="PC1", ylab="PC2", bty="l", las=1, col=adjustcolor("grey", 0.5),
          xlim=c(min(c(x, PCA$rotation[1:n,1]*PCA$sdev[1]*scale)), 
@@ -169,8 +146,16 @@ C.id <- C$No
          ylim=c(min(c(y,(PCA$rotation[1:n,2]*PCA$sdev[2]*scale))),
                 max(c(y,(PCA$rotation[1:n,2]*PCA$sdev[2]*scale))))
          )
+    points(x[cond1], y[cond1], col=NA, bg=adjustcolor("darkgrey", 0.5), pch=21)
+    points(x[cond2], y[cond2], col=adjustcolor("grey",0.5), bg=adjustcolor("lightgrey", 0.5), pch=21)
+    
+    # Add ICV
     points(Zj.prime[,1], Zj.prime[,2], col=adjustcolor("magenta", 0.3), cex=1)
+    
+    # Add focal station
     points(Yj.prime[1,1], Yj.prime[1,2], col="blue", pch=19, cex=1)
+    
+    # Add NN
     points(X.prime[nnd$nn.index,1], X.prime[nnd$nn.index,2], col=adjustcolor("black",0.8), bg=adjustcolor("green",0.7), pch=23, cex=1)
     Arrows(x0=rep(0, 6), y0=rep(0, 6), 
            x1=(PCA$rotation[1:n,1]*PCA$sdev[1]*scale), 
@@ -179,35 +164,104 @@ C.id <- C$No
     text(x=(PCA$rotation[1:n,1]*PCA$sdev[1]*scale), 
          y=(PCA$rotation[1:n,2]*PCA$sdev[2]*scale), 
          labels=rownames(PCA$rotation)[1:6], col=adjustcolor("black",0.8), adj=0.5)
+
     #xa <- par("usr")[1] + (par("usr")[2]-par("usr")[1])*0.1
     #ya <- par("usr")[4] - (par("usr")[4]-par("usr")[3])*0.1
     #text(xa, ya, "A",  cex=2) 
-    legend("right", c("Focal station", "NN"), col=c("blue", "black"), pch=c(19,23), 
-           pt.bg=c("black", "green"), bty="n")
-    
     return(data.frame(NN.sigma, NN.station, NN.Mdist=NN.dist, num_PCs=PCs))
 }
 ```
 
-Scale down the total cov mat, preserve relationships
-```{r}
-sigmaDmakeplot(base, site1_future,site1_ICV,1)
+
+```{r, create base}
+
+cov <- matrix(c(1,0.8,0.8,2), nrow=2)
+
+set.seed(23428)
+cov1 <- genPositiveDefMat(2,covMethod="unifcorrmat" )
+cov1
+
+base <- data.frame(No = 1:5000, X1 = NA, X2=NA)
+
+set.seed(1029301)
+base[,2:3] <- data.frame(mvrnorm(5000, mu=c(0,0), Sigma=cov1$Sigma))
+head(base)
+
+head(base)
+```
+
+```{r, first example}
+
+site1_future <- data.frame( No=1, X1=5, X2=-5)
+site1_future
+cov <- cov1$Sigma/50
+  # divide by 5 gives NN.sigma of 2.8
+  # Divide by 2 gives NN.sigma of 1.5
+  # divide by 10 gives NN.sigma of 4.2
+  # divdie by 20 gives NN.sigma of 3.5
+  # divide by 50 gives 5.8
+set.seed(913234)
+site1_climate <- mvrnorm(100, mu=as.numeric(site1_future[1,2:3]), Sigma=cov)
+
+head(site1_climate)
+site1_ICV <- data.frame(No=1,
+                        X1=site1_climate[,1] - site1_future[1,2], 
+                        X2=site1_climate[,2] - site1_future[1,3]
+                        )
+plot(site1_climate[,2], site1_ICV[,3]) # should be 1:1 line
+
+par(mfrow=c(1,1))
+plot(base[,2], base[,3]
+                    , xlim=c(-10, 10), ylim=c(-10,10))
+points(site1_climate, col="pink")
+points(site1_ICV[,2:3], col="pink")
+
+
+site1_ICV <- data.frame(No=1,
+                        X1=site1_climate[,1],
+                        X2=site1_climate[,2] 
+                        )
+
+
+
+### Finally make the plot ####
+pdf("../figures/EXAMP_largeSigma.pdf", width=6, height = 4)
+  par(mfrow=c(1,2), mar=c(4,4,3,0))
+  a <- sigmaDmakeplot(base, site1_future,site1_ICV,1)
+dev.off()
+round(a$NN.sigma,2)
+
+# 
 ```
 
 
 One variable higher variance than the other
 ```{r}
 cov <- cov1$Sigma/2
-cov[1,1] <- cov[1,1]*2
+cov[1,2] <- cov[1,2]*-1#/2
+cov[2,1] <- cov[2,1]*-1
 cov[2,2] <- cov[2,2]/2
+
 set.seed(913235)
 site1_climate <- mvrnorm(100, mu=as.numeric(site1_future[1,2:3]), Sigma=cov)
-plot(base[,2], base[,3]
-                    , xlim=c(-10, 10), ylim=c(-10,10))
-points(site1_climate, col="pink")
+#plot(base[,2], base[,3]
+#                    , xlim=c(-10, 10), ylim=c(-10,10))
+#points(site1_climate, col="pink")
 site1_ICV <- data.frame(No=1,
                         X1=site1_climate[,1],
                         X2=site1_climate[,2]
                         )
-sigmaDmakeplot(base, site1_future,site1_ICV,1)
+
+pdf("../figures/EXAMP_smallSigma.pdf", width=6, height = 4)
+  par(mfrow=c(1,2), mar=c(4,4,3,0))
+  b <- sigmaDmakeplot(base, site1_future,site1_ICV,1)
+  dev.off()
+round(b$NN.sigma,2)
+
+pdf("../figures/EXAMP_legend.pdf", width=3, height = 3)
+  plot(0,0, xlim=c(0,10), ylim=c(0,10))
+  legend(0,5, c("Focal station", "NN"), col=c("blue", "black"), pch=c(19,23), pt.bg=c("black", "green"), bty="n")
+dev.off()
+    
+
 ```

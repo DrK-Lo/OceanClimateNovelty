@@ -556,7 +556,8 @@ dat_Nov <- final_dat12
 write.csv(final_dat12, paste0(results_dir, "SigmaD_Hem.csv"), row.names = FALSE)
 
 head(dat_Nov)
-for_liqing <- data.frame(No=dat_Nov$No, lat=dat_Nov$lat,long=dat_Nov$long,
+for_liqing <- data.frame(No=dat_Nov$No, lat=dat_Nov$lat,
+                         long=dat_Nov$long,
                          A=dat_Nov$NN.sigma_today_1800, 
                          B=dat_Nov$NN.sigma_1800_today, 
                          C=dat_Nov$NN.sigma_2100_4.5_today, 
@@ -565,8 +566,15 @@ for_liqing <- data.frame(No=dat_Nov$No, lat=dat_Nov$lat,long=dat_Nov$long,
                          F=dat_Nov$NN.sigma_today_2100_8.5)
 write.csv(for_liqing,  paste0(results_dir,"SigmaD_Hem_plot1.csv"), row.names=FALSE)
 
-for_liqing_Md <- data.frame(No=dat_Nov$No, lat=dat_Nov$lat,long=dat_Nov$long,A=dat_Nov$NN.Mdist_today_1800, B=dat_Nov$NN.Mdist_1800_today, C=dat_Nov$NN.Mdist_2100_4.5_today, D=dat_Nov$NN.Mdist_today_2100_4.5, E=dat_Nov$NN.Mdist_2100_8.5_today, F=dat_Nov$NN.Mdist_today_2100_8.5)
-write.csv(for_liqing_Md,  paste0(results_dir,"SigmaD_Hem_plot2.csv"), row.names=FALSE)
+for_liqing_Md <- data.frame(No=dat_Nov$No,
+                            lat=dat_Nov$lat,long=dat_Nov$long,
+                            A=dat_Nov$NN.Mdist_today_1800, 
+                            B=dat_Nov$NN.Mdist_1800_today, 
+                            C=dat_Nov$NN.Mdist_2100_4.5_today, 
+                            D=dat_Nov$NN.Mdist_today_2100_4.5, 
+                            E=dat_Nov$NN.Mdist_2100_8.5_today, 
+                            F=dat_Nov$NN.Mdist_today_2100_8.5)
+write.csv(for_liqing_Md,  paste0(results_dir,"MD_Hem_plot2.csv"), row.names=FALSE)
 ```
 
 ```
