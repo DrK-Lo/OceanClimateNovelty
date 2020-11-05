@@ -28,7 +28,7 @@ source("0-Novelty_Oceans_Functions.R")
 #whichStation=1
 
 sigmaDmakeplot <- function(A, B, C, whichStation){
-C.id <- C$No
+  C.id <- C$No
   proxy <- B$No
   length(proxy)
   proxy2 <- sort(unique(proxy))
@@ -139,15 +139,15 @@ C.id <- C$No
     #################### 
   
     ## PC-rotated plot ####
-    plot(x, y,
+    plot(X.prime[,1], X.prime[,2],
          xlab="PC1", ylab="PC2", bty="l", las=1, col=adjustcolor("grey", 0.5),
          xlim=c(min(c(x, PCA$rotation[1:n,1]*PCA$sdev[1]*scale)), 
                 max(c(x, PCA$rotation[1:n,1]*PCA$sdev[1]*scale))),
          ylim=c(min(c(y,(PCA$rotation[1:n,2]*PCA$sdev[2]*scale))),
                 max(c(y,(PCA$rotation[1:n,2]*PCA$sdev[2]*scale))))
          )
-    points(x[cond1], y[cond1], col=NA, bg=adjustcolor("darkgrey", 0.5), pch=21)
-    points(x[cond2], y[cond2], col=adjustcolor("grey",0.5), bg=adjustcolor("lightgrey", 0.5), pch=21)
+    points(X.prime[cond1,1], X.prime[cond1,2], col=NA, bg=adjustcolor("darkgrey", 0.5), pch=21)
+    points(X.prime[cond2,1], X.prime[cond2,2], col=adjustcolor("grey",0.5), bg=adjustcolor("lightgrey", 0.5), pch=21)
     
     # Add ICV
     points(Zj.prime[,1], Zj.prime[,2], col=adjustcolor("magenta", 0.3), cex=1)
@@ -190,7 +190,7 @@ head(base)
 head(base)
 ```
 
-```{r, first example}
+```{r, first example} 
 
 site1_future <- data.frame( No=1, X1=5, X2=-5)
 site1_future
@@ -226,7 +226,7 @@ site1_ICV <- data.frame(No=1,
 
 ### Finally make the plot ####
 pdf("../figures/EXAMP_largeSigma.pdf", width=6, height = 4)
-  par(mfrow=c(1,2), mar=c(4,4,3,0))
+  par(mfrow=c(1,2), mar=c(4,4,1,1))
   a <- sigmaDmakeplot(base, site1_future,site1_ICV,1)
 dev.off()
 round(a$NN.sigma,2)
@@ -237,12 +237,12 @@ round(a$NN.sigma,2)
 
 One variable higher variance than the other
 ```{r}
-cov <- cov1$Sigma/2
-cov[1,2] <- cov[1,2]*-1#/2
-cov[2,1] <- cov[2,1]*-1
-cov[2,2] <- cov[2,2]/2
+cov <- cov1$Sigma/4 
+cov[1,2] <- 0#cov[1,2]*-1#/2
+cov[2,1] <- 0#cov[2,1]*-1
+cov[2,2] <- cov[2,2]*4
 
-set.seed(913235)
+set.seed(913236)
 site1_climate <- mvrnorm(100, mu=as.numeric(site1_future[1,2:3]), Sigma=cov)
 #plot(base[,2], base[,3]
 #                    , xlim=c(-10, 10), ylim=c(-10,10))
@@ -253,14 +253,20 @@ site1_ICV <- data.frame(No=1,
                         )
 
 pdf("../figures/EXAMP_smallSigma.pdf", width=6, height = 4)
-  par(mfrow=c(1,2), mar=c(4,4,3,0))
+  par(mfrow=c(1,2), mar=c(4,4,1,1))
   b <- sigmaDmakeplot(base, site1_future,site1_ICV,1)
   dev.off()
 round(b$NN.sigma,2)
 
-pdf("../figures/EXAMP_legend.pdf", width=3, height = 3)
+pdf("../figures/EXAMP_legend.pdf", width=6, height = 3)
   plot(0,0, xlim=c(0,10), ylim=c(0,10))
-  legend(0,5, c("Focal station", "NN"), col=c("blue", "black"), pch=c(19,23), pt.bg=c("black", "green"), bty="n")
+  legend(0,10, c("Baseline (today's climate)",
+                "Focal station (future climate)", 
+                "Climate variability at focal station",
+                "Nearest neighbor in baseline"), 
+         col=c("grey", "blue", "magenta", "black"), 
+         pch=c(1, 19, 1, 23), 
+         pt.bg=c(NA, NA, NA, "green"), bty="n")
 dev.off()
     
 

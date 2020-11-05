@@ -3,16 +3,30 @@ title: "NS Hemisphere Visualizations"
 author: "KE Lotterhos"
 date: "10/27/2020"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-library(FNN)
-library(ggplot2)
+
+#install.packages(c("cowplot", "googleway", "ggplot2", "ggrepel", 
+#"ggspatial", "libwgeom", "sf", "rnaturalearth", "rnaturalearthdata"))
+
+#library("rnaturalearth")
+#library("rnaturalearthdata")
+
+#world <- ne_countries(scale = "medium", returnclass = "sf")
+#class(world)
+
+
 source("0-Novelty_Oceans_Functions.R")
+#library(FNN)
+#library(ggplot2)
+#library(ggmap)
+#library(mapdata)
+#library(maps)
 
 code_dir <- "/Users/lotterhos/Documents/GitHub/OceanClimateNovelty/src/"
 
@@ -43,8 +57,10 @@ dfresults <- dfresults[order(dfresults$No),]
 head(dfresults)
 tail(dfresults)
 
+world <- map_data("world2")
  ggplot()+
-    geom_polygon(data = world, aes(x=long, y = lat, group=group)) + geom_point(data = MPAs, aes(x= (Centroid_Longitude_trans), y = Centroid_Latitude)) + 
+   geom_polygon(data = world, aes(x=long, y = lat, group=group)) + 
+   geom_point(data = MPAs, aes(x= (Centroid_Longitude_trans), y = Centroid_Latitude)) + 
    stat_summary_2d(data=dfresults, aes(x=long, y = lat, z= NN.sigma_today_2100_4.5), bins=80, alpha = 0.8)
 
 # Transform longitude from this analysis
@@ -53,7 +69,8 @@ dfresults$long_trans[which(dfresults$long>360)] <- dfresults$long[which(dfresult
   # 380 should correspond to 20; 360 corresponds to 0
 
  ggplot()+
-    geom_polygon(data = world, aes(x=long, y = lat, group=group)) + geom_point(data = MPAs, aes(x= (Centroid_Longitude_trans), y = Centroid_Latitude)) + 
+   # geom_polygon(data = world, aes(x=long, y = lat, group=group)) + 
+   geom_point(data = MPAs, aes(x= (Centroid_Longitude_trans), y = Centroid_Latitude)) + 
    stat_summary_2d(data=dfresults, aes(x=long_trans, y = lat, z= NN.sigma_today_2100_4.5), bins=80, alpha = 0.8)
 
 

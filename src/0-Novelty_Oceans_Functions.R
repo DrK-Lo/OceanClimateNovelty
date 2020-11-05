@@ -379,6 +379,7 @@ calc_sigma_D <- function(A, B, C, whichStation, append="", makePlot=FALSE){
 #--------------------------------  
 ### function for plotting ####
 #--------------------------------
+world <- map_data("world2")
 Plot_nonInt<-function(lat, long, var, refMap, legend_name){
   sampData <- data.frame(lat, long, var)
   
