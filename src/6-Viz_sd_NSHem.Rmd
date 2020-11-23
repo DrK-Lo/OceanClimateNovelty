@@ -1,0 +1,30 @@
+---
+title: "NS Hemisphere visualize variability"
+author: "KE Lotterhos"
+date: "11/23/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+
+source("0-Novelty_Oceans_Functions.R")
+#library(FNN)
+#library(ggplot2)
+#library(ggmap)
+#library(mapdata)
+#library(maps)
+
+code_dir <- "/Users/lotterhos/Documents/GitHub/OceanClimateNovelty/src/"
+
+results_dir <- "/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Results/HemisphereRestricted/"
+
+data_dir <- "/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Data/"
+
+
+setwd(code_dir)
+```
