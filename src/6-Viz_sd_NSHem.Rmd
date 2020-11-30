@@ -355,8 +355,8 @@ p1N <- p0N +  geom_hex(data= dat_1800[plotind_1800,], aes(SST, pH), fill=c1800, 
   geom_segment(aes(x=15, y = 8.65, xend=5, yend=8.25), color="grey30") + 
   geom_segment(aes(x=15, y = 8.65, xend=23, yend=8.25), color="grey30") +
   annotate(geom="text", x=15, y=7.6, label="Novel in 2000", adj=0, color=adjustcolor(c2000,0.5)) +
-  geom_segment(aes(x=15, y = 7.63, xend=7, yend=8.0), color=adjustcolor(c2000,0.5)) +
-  geom_segment(aes(x=15, y = 7.63, xend=25, yend=7.95), color=adjustcolor(c2000,0.5)) 
+  geom_segment(aes(x=15, y = 7.63, xend=7, yend=8.05), color=adjustcolor(c2000,0.5)) +
+  geom_segment(aes(x=15, y = 7.63, xend=25, yend=8.0), color=adjustcolor(c2000,0.5)) 
 #p1N
 
 p2N <- p0N +  geom_hex(data= dat4.5[plotind_4.5,], aes(SST, pH), fill=c4.5, alpha=0.5) +
@@ -366,7 +366,7 @@ p2N <- p0N +  geom_hex(data= dat4.5[plotind_4.5,], aes(SST, pH), fill=c4.5, alph
   geom_segment(aes(x=15, y = 8.65, xend=23, yend=8.1), color=adjustcolor(c2000,0.7)) +
   annotate(geom="text",  x=15, y=7.6, label="Novel in 2100 RCP 4.5", adj=0, color=adjustcolor(c4.5,0.9))  +
   geom_segment(aes(x=15, y = 7.63, xend=3, yend=7.9), color=adjustcolor(c4.5,0.9)) +
-  geom_segment(aes(x=15, y = 7.63, xend=21, yend=7.9), color=adjustcolor(c4.5,0.9)) 
+  geom_segment(aes(x=15, y = 7.63, xend=21, yend=7.85), color=adjustcolor(c4.5,0.9)) 
 #p2N  
 
 p3N <- p0N +  geom_hex(data= dat8.5[plotind_8.5,], aes(SST, pH), fill=c8.5, alpha=0.5) +
