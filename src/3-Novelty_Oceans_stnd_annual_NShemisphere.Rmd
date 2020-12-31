@@ -34,13 +34,19 @@ source("src/0-Novelty_Oceans_Functions.R")
 ##################################
 #### Read in the input data ####
 ##################################
-dat1 <- fread("/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_1800_2000.txt", sep = ",")
-dat4.5 <- fread("/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_2070_2100_RCP45.txt", sep = ",")
-dat8.5 <- fread("/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_2070_2100_RCP85.txt", sep = ",")
 
-ICV <- fread("/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Data/ICV_Temp_Arag_pH_1960_2020.txt")
+path <- "/Users/lotterhos/Google Drive/_LotterhosLab2021/LotLab_projects/0-grants_or_active/2018-Unfunded-OceanClimateNovelty/Data/Lotterhos/"
 
-results_dir <- "/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Results/HemisphereRestricted/"
+path2<- "/Users/lotterhos/Google Drive/_LotterhosLab2021/LotLab_projects/0-grants_or_active/2018-Unfunded-OceanClimateNovelty/Data/"
+
+dat1 <- fread(paste0(path,"Katie_Temp_Arag_1800_2000.txt"), sep = ",")
+dat4.5 <- fread(paste0(path,"Katie_Temp_Arag_2070_2100_RCP45.txt"), sep = ",")
+dat8.5 <- fread(paste0(path,"Katie_Temp_Arag_2070_2100_RCP85.txt"), sep = ",")
+
+ICV <- fread(paste0(path2, "ICV_Temp_Arag_pH_1960_2020.txt"))
+
+results_path <- "/Users/lotterhos/Google Drive/_LotterhosLab2021/LotLab_projects/0-grants_or_active/2018-Unfunded-OceanClimateNovelty/Results/"
+results_dir <- paste0(results_path, "HemisphereRestricted/")
 
 head(dat1)
 head(dat8.5)
@@ -54,6 +60,42 @@ unique(ICV$Year)
 hist(c(dat1$Arag, dat8.5$Arag))
 hist(log10(c(dat1$Arag, dat8.5$Arag)))
 ```
+
+## boxplot ICV
+```{r, boxplot ICV}
+pdf(paste0(results_dir, "ICV_Lat.pdf"), width=9, height=7)
+par(mfrow=c(3,1), mar=c(4,5,0.5,0.5), oma=c(2,0,0,0), las=0)
+
+lat <- sort(unique(ICV$Lat))
+length(lat)
+lat[1]
+lat[42]
+lat[80]
+lat[117]
+lat[158]
+ind <- c(1,42,80,117,158)
+lat_names=rep(NA, 169)
+lat_names[ind] <- lat[ind]
+lat_names[80] <- 0 #close enough
+
+boxplot(ICV$SST~ICV$Lat, col="green",  
+        #border = rgb(0,0,0,0.3),  outpch=20, outcol= rgb(0,0,0,0.3), outbg=rgb(0,0,0,0.3), 
+        ylab="", xlab="", names=lat_names, las=1, cex=1.2)
+  mtext("SST", side=2, cex=1.5, line=3)
+
+boxplot(ICV$Arag~ICV$Lat, col="green",
+        ylab="", xlab="", names=lat_names, las=1, cex=1.2)
+  mtext("Arag.", side=2, cex=1.5, line=3)
+
+boxplot(ICV$pH ~ ICV$Lat, col="green",
+        ylab="", xlab="", names=lat_names, las=1, cex=1.2)
+  mtext("pH", side=2, cex=1.5, line=3)
+
+
+mtext("Latitude", side=1, outer=TRUE, cex=2)
+dev.off()
+```
+
 
 ```{r}
 ##################################
@@ -85,6 +127,8 @@ ICV$Arag <- log10(ICV$Arag)
 #boxplot(dat4.5$pH ~ dat4.5$Year)
 # note that these two datasets are exactly the same for years < 2000
 ```
+
+
 
 ```{r}
 #--------------------------------
