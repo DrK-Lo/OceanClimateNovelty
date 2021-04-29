@@ -331,7 +331,7 @@ omit<-c(1905:1969,1988,2018)
 #Removing 1950 and 2018 from dataset and visualizing again
 SST<-
   ggplot(data=Tdat[!Tdat$Years%in%omit,],aes(x=Years,y=Temp_sd,color=Latitude, shape=Source))+
-  geom_point(size=3)+
+  geom_point(size=4)+
   xlab("Years")+
   ylab("Surface Sea Temperature (standard deviation)")+
   xlim(1969,2020)+
@@ -342,12 +342,12 @@ SST<-
   scale_shape_manual(values=c(17,15,18,21))+
   scale_colour_continuous(name="Latitude",type = "gradient",low="red",high="blue")+
   theme_classic()+
-  theme(text = element_text(size = 15))
+  theme(text = element_text(size = 20))
 
 SST_LL<-
   ggplot(data=Tdat_LL[!Tdat_LL$Years%in%omit,],aes(x=Years,y=Temp_sd,color=Latitude, shape=Source))+
   #ggplot(data=Tdat_LL[Tdat_LL$Latitude<40,],aes(x=Years,y=Temp_sd,color=Latitude, shape=Source))+
-  geom_point(size=3)+
+  geom_point(size=4)+
   xlab("Years")+
   ylab("Surface Sea Temperature (standard deviation)")+
   xlim(1969,2020)+
@@ -359,7 +359,7 @@ SST_LL<-
   scale_shape_manual(values=c(17,15,18,21))+
   scale_colour_continuous(name="Latitude",type = "gradient",low="red",high="blue")+
   theme_classic()+
-  theme(text = element_text(size = 15))
+  theme(text = element_text(size = 20))
 
 #Code below is specific to pH data visualization
 #Combine all data into one for visualization
@@ -370,7 +370,7 @@ TdatPh_LL<-bind_rows(nh_sd,hots_sd,dat_1800_Tropic_sd_LL[dat_1800_Tropic_sd_LL$Y
 omitPh<-c(1905:1969)
 pH<-
   ggplot(data=TdatPh[!TdatPh$Years%in%omitPh,],aes(x=Years,y=pH_sd,color=Latitude, shape=Source))+
-  geom_point(size=3,show.legend=FALSE)+
+  geom_point(size=4,show.legend=FALSE)+
   #geom_point(size=3)+
   xlab("Years")+
   ylab("pH (standard deviation)")+
@@ -387,10 +387,10 @@ pH<-
   #  fill = guide_legend(order = 0)
   #)+
   theme_classic()+
-  theme(text = element_text(size = 15))
+  theme(text = element_text(size = 20))
 
 pH_LL<-ggplot(data=TdatPh_LL[!TdatPh_LL$Years%in%omitPh,],aes(x=Years,y=pH_sd,color=Latitude, shape=Source))+
-  geom_point(size=3,show.legend=FALSE)+
+  geom_point(size=4,show.legend=FALSE)+
   #geom_point(size=3)+
   xlab("Years")+
   ylab("pH (standard deviation)")+
@@ -407,7 +407,7 @@ pH_LL<-ggplot(data=TdatPh_LL[!TdatPh_LL$Years%in%omitPh,],aes(x=Years,y=pH_sd,co
   #  fill = guide_legend(order = 0)
   #)+
   theme_classic()+
-  theme(text = element_text(size = 15))
+  theme(text = element_text(size = 20))
 
 legend <- get_legend(SST)
 SST<-SST+ theme(legend.position="none")
