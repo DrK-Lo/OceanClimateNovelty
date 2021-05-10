@@ -9,10 +9,14 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+To use this code, set your working directory to the /src folder, e.g.:
+setwd("/Users/lotterhos/Documents/GitHub/OceanClimateNovelty/src")
+
+You will also have to update the paths below to be the paths to where the data is stored on your computer and where you want to output the results. In my case, I was using GitHub to track code, but the data files were too large to store on github, so I stored them on a google drive.
 
 ```{r}
 
-source("0-Novelty_Oceans_Functions.R")
+
 #library(FNN)
 #library(ggplot2)
 #library(ggmap)
@@ -21,18 +25,23 @@ source("0-Novelty_Oceans_Functions.R")
 
 code_dir <- "/Users/lotterhos/Documents/GitHub/OceanClimateNovelty/src/"
 
-results_dir <- "/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Results/HemisphereRestricted/"
+google_dir <- "/Users/lotterhos/Google Drive/_LotterhosLab2021/LotLab_projects/0-grants_or_active/2018-Unfunded-OceanClimateNovelty/"
 
-data_dir <- "/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Data/"
+results_dir <- paste0(google_dir, "Results/HemisphereRestricted/")
 
-dat1 <- fread("/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_1800_2000.txt", sep = ",")
-dat4.5 <- fread("/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_2070_2100_RCP45.txt", sep = ",")
-dat8.5 <- fread("/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Data/Lotterhos/Katie_Temp_Arag_2070_2100_RCP85.txt", sep = ",")
+data_dir <- paste0(google_dir,"Data/")
+
+dat1 <- fread(paste0(data_dir,"Lotterhos/Katie_Temp_Arag_1800_2000.txt"), sep = ",")
+
+dat4.5 <- fread(paste0(data_dir,"Lotterhos/Katie_Temp_Arag_2070_2100_RCP45.txt"), sep = ",")
+                
+dat8.5 <- fread(paste0(data_dir,"Lotterhos/Katie_Temp_Arag_2070_2100_RCP85.txt"), sep = ",")
 
 dat_2000 <-   dat1 %>% filter(Year>1960 & Year<2010)
 dat_1800 <- dat1 %>% filter(Year<1850)
 
 setwd(code_dir)
+source("0-Novelty_Oceans_Functions.R")
 ```
 
 ## Set colors

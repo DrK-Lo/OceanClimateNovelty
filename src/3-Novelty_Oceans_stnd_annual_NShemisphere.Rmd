@@ -78,17 +78,17 @@ lat_names=rep(NA, 169)
 lat_names[ind] <- lat[ind]
 lat_names[80] <- 0 #close enough
 
-boxplot(ICV$SST~ICV$Lat, col="green",  
+boxplot(ICV$SST~ICV$Lat, col="cyan",  
         #border = rgb(0,0,0,0.3),  outpch=20, outcol= rgb(0,0,0,0.3), outbg=rgb(0,0,0,0.3), 
-        ylab="", xlab="", names=lat_names, las=1, cex=1.2)
+        ylab="", xlab="", names=lat_names, las=1, cex=1.2, outline=FALSE, border=rgb(0,0,0,0.5), lty=1)
   mtext("SST", side=2, cex=1.5, line=3)
 
-boxplot(ICV$Arag~ICV$Lat, col="green",
-        ylab="", xlab="", names=lat_names, las=1, cex=1.2)
+boxplot(ICV$Arag~ICV$Lat, col="coral",
+        ylab="", xlab="", names=lat_names, las=1, cex=1.2, outline=FALSE, border=rgb(0,0,0,0.5), lty=1)
   mtext("Arag.", side=2, cex=1.5, line=3)
 
-boxplot(ICV$pH ~ ICV$Lat, col="green",
-        ylab="", xlab="", names=lat_names, las=1, cex=1.2)
+boxplot(ICV$pH ~ ICV$Lat, col="gold",
+        ylab="", xlab="", names=lat_names, las=1, cex=1.2, outline=FALSE, border=rgb(0,0,0,0.5), lty=1)
   mtext("pH", side=2, cex=1.5, line=3)
 
 

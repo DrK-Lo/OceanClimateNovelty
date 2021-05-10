@@ -7,6 +7,11 @@ output:
   pdf_document: default
 ---
 
+To use this code, set your working directory to the /src folder, e.g.:
+setwd("/Users/lotterhos/Documents/GitHub/OceanClimateNovelty/src")
+
+You will also have to update the paths below to be the paths to where the data is stored on your computer and where you want to output the results. In my case, I was using GitHub to track code, but the data files were too large to store on github, so I stored them on a google drive.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -21,7 +26,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #class(world)
 
 
-source("0-Novelty_Oceans_Functions.R")
+
 #library(FNN)
 #library(ggplot2)
 #library(ggmap)
@@ -29,13 +34,14 @@ source("0-Novelty_Oceans_Functions.R")
 #library(maps)
 
 code_dir <- "/Users/lotterhos/Documents/GitHub/OceanClimateNovelty/src/"
-
-results_dir <- "/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Results/HemisphereRestricted/"
-
-data_dir <- "/Users/lotterhos/Google Drive/katie_research/2018-OceanClimateNovelty/Data/"
-
-
 setwd(code_dir)
+source("0-Novelty_Oceans_Functions.R")
+
+google_dir <- "/Users/lotterhos/Google Drive/_LotterhosLab2021/LotLab_projects/0-grants_or_active/2018-Unfunded-OceanClimateNovelty/"
+
+results_dir <- paste0(google_dir, "Results/HemisphereRestricted/")
+
+data_dir <- paste0(google_dir,"Data/")
 ```
 
 
